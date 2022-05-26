@@ -729,6 +729,35 @@ LRESULT FancyZones::WndProc(HWND window, UINT message, WPARAM wparam, LPARAM lpa
                     MoveSizeUpdate(monitor, ptScreen);
                 }
             }
+            else
+            {
+                // Handle "Maximize in Zone" events
+				auto hwnd = reinterpret_cast<HWND>(wparam);
+
+				if (FancyZonesWindowUtils::IsCandidateForZoning(hwnd) && FancyZonesWindowUtils::IsWindowMaximized(hwnd))
+                {
+                    auto monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONULL);
+                    auto workArea = m_workAreaHandler.GetWorkArea(hwnd, VirtualDesktop::instance().GetCurrentVirtualDesktopId());
+                    const auto zoneSet = workArea->ZoneSet();
+
+                    if (zoneSet)
+                    {
+                        // If Shift key is pressed...
+                        if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
+                        {
+                            // ... resize window to all zones in work area
+                            auto zones = zoneSet->GetAllZones();
+                            MoveWindowIntoZone(hwnd, workArea, zones);
+                        }
+                        else
+                        {
+                            // ... otherwise, resize window to zone the mouse cursor is in
+                            auto zones = zoneSet->ZonesFromPoint(ptScreen);
+                            MoveWindowIntoZone(hwnd, workArea, zones);
+                        }
+                    }
+                }
+            }
         }
         else if (message == WM_PRIV_WINDOWCREATED)
         {

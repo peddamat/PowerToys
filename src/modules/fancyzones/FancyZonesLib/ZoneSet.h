@@ -22,6 +22,12 @@ interface __declspec(uuid("{E4839EB7-669D-49CF-84A9-71A2DFD851A3}")) IZoneSet : 
      */
     IFACEMETHOD_(FancyZonesDataTypes::ZoneSetLayoutType, LayoutType)() const = 0;
     /**
+     * Get all zones contained within the ZoneSet.
+     *
+     * @returns Vector of indices, corresponding to the current set of zones contained within the ZoneSet's workarea.
+     */
+    IFACEMETHOD_(ZoneIndexSet, GetAllZones)() const = 0;
+    /**
      * Get zones from cursor coordinates.
      *
      * @param   pt Cursor coordinates.
