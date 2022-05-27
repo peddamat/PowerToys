@@ -734,7 +734,8 @@ LRESULT FancyZones::WndProc(HWND window, UINT message, WPARAM wparam, LPARAM lpa
                 // Handle "Maximize in Zone" events
 				auto hwnd = reinterpret_cast<HWND>(wparam);
 
-				if (FancyZonesWindowUtils::IsCandidateForZoning(hwnd) && FancyZonesWindowUtils::IsWindowMaximized(hwnd))
+                // Hopefully the left-to-right evaluation order reduces the overhead of this check...
+				if (FancyZonesWindowUtils::IsCandidateForZoning(hwnd) && FancyZonesWindowUtils::IsWindowMaximized(hwnd) && FancyZonesSettings::settings().maximizeInZone)
                 {
                     auto monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONULL);
                     auto workArea = m_workAreaHandler.GetWorkArea(hwnd, VirtualDesktop::instance().GetCurrentVirtualDesktopId());

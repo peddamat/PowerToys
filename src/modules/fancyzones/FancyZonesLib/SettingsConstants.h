@@ -9,6 +9,7 @@ enum class SettingId
     MoveWindowsBasedOnPosition,
     OverlappingZonesAlgorithm,
     DisplayChangeMoveWindows,
+    MaximizeInZone,
     ZoneSetChangeMoveWindows,
     AppLastZoneMoveWindows,
     OpenWindowOnActiveMonitor,

@@ -27,6 +27,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library
             FancyzonesMoveWindowsBasedOnPosition = new BoolProperty();
             FancyzonesOverlappingZonesAlgorithm = new IntProperty();
             FancyzonesDisplayChangeMoveWindows = new BoolProperty();
+            FancyzonesMaximizeInZone = new BoolProperty();
             FancyzonesZoneSetChangeMoveWindows = new BoolProperty();
             FancyzonesAppLastZoneMoveWindows = new BoolProperty();
             FancyzonesOpenWindowOnActiveMonitor = new BoolProperty();
@@ -74,6 +75,9 @@ namespace Microsoft.PowerToys.Settings.UI.Library
 
         [JsonPropertyName("fancyzones_displayChange_moveWindows")]
         public BoolProperty FancyzonesDisplayChangeMoveWindows { get; set; }
+
+        [JsonPropertyName("fancyzones_maximizeInZone")]
+        public BoolProperty FancyzonesMaximizeInZone { get; set; }
 
         [JsonPropertyName("fancyzones_zoneSetChange_moveWindows")]
         public BoolProperty FancyzonesZoneSetChangeMoveWindows { get; set; }
