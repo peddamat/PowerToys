@@ -787,7 +787,7 @@ void FancyZones::OnDisplayChange(DisplayChangeType changeType) noexcept
 
     UpdateWorkAreas();
 
-    if ((changeType == DisplayChangeType::WorkArea) || (changeType == DisplayChangeType::DisplayChange))
+    if ((changeType == DisplayChangeType::WorkArea) || (changeType == DisplayChangeType::DisplayChange) || (changeType == DisplayChangeType::Initialization))
     {
         if (FancyZonesSettings::settings().displayChange_moveWindows)
         {
@@ -885,13 +885,39 @@ void FancyZones::UpdateWorkAreas() noexcept
 
 void FancyZones::UpdateWindowsPositions(bool suppressMove) noexcept
 {
+    // For each window in each desktop...
     for (const auto [window, desktopId] : VirtualDesktop::instance().GetWindowsRelatedToDesktops())
     {
+        // Get any zonesets the window might be in...
         auto zoneIndexSet = FancyZonesWindowProperties::RetrieveZoneIndexProperty(window);
         auto workArea = m_workAreaHandler.GetWorkArea(window, desktopId);
         if (workArea)
         {
-            m_windowMoveHandler.MoveWindowIntoZoneByIndexSet(window, zoneIndexSet, workArea, suppressMove);
+            if (!zoneIndexSet.empty())
+            {
+				// If the window is already in any zones, move them there...
+                m_windowMoveHandler.MoveWindowIntoZoneByIndexSet(window, zoneIndexSet, workArea, suppressMove);
+            }
+            else
+            {
+                // If the window isn't already in any zones, figure out the best zone to add it to
+                if (FancyZonesWindowUtils::IsCandidateForZoning(window))
+                {
+                    // Find the center of the window
+                    RECT windowRect;
+                    GetWindowRect(window, &windowRect);
+                    POINT center;
+                    center.x = (long)(0.5 * windowRect.left + 0.5 * windowRect.right);
+                    center.y = (long)(0.5 * windowRect.top + 0.5 * windowRect.bottom);
+
+                    const auto zoneSet = workArea->ZoneSet();
+                    if (zoneSet)
+                    {
+                        auto zones = zoneSet->ZonesFromPoint(center);
+                        MoveWindowIntoZone(window, workArea, zones);
+                    }
+                }
+            }
         }
     }
 }
