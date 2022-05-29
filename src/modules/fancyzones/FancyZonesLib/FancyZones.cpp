@@ -419,20 +419,34 @@ void FancyZones::WindowCreated(HWND window) noexcept
         active = MonitorFromPoint(cursorPosition, MONITOR_DEFAULTTOPRIMARY);
     }
 
-    bool movedToAppLastZone = false;
-    if (moveToAppLastZone)
+    bool windowHasMoved = false;
+    if (moveToZoneUnderMouse)
     {
-        movedToAppLastZone = MoveToAppLastZone(window, active, primary);
+        // First check if we currently have a sibling window of the same application active...
+        auto windowUnderCursor = WindowFromPoint(cursorPosition);
+        if (FancyZonesWindowUtils::ProcessForWindow(windowUnderCursor) == FancyZonesWindowUtils::ProcessForWindow(window))
+        {
+            // .. if so, move the sibling window over its sister
+            MoveWindowIntoZoneByCursor(window);
+            windowHasMoved = true;
+        }
+    }
+
+    if (moveToAppLastZone && !windowHasMoved)
+    {
+        // .. if not, move the window to its last known zone
+		windowHasMoved = MoveToAppLastZone(window, active, primary);
     }
 
 	// No application history exists, so place the window into the zone under the mouse cursor
-    if (moveToZoneUnderMouse && !movedToAppLastZone)
+    if (moveToZoneUnderMouse && !windowHasMoved)
     {
         MoveWindowIntoZoneByCursor(window);
     }
     // Open on active monitor if window wasn't zoned
-    else if (openOnActiveMonitor && !movedToAppLastZone)
+    else if (openOnActiveMonitor && !windowHasMoved)
     {
+		// Open on active monitor if window wasn't zoned
         m_dpiUnawareThread.submit(OnThreadExecutor::task_t{ [&] { MonitorUtils::OpenWindowOnActiveMonitor(window, active); } }).wait();
     }
 }
