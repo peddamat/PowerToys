@@ -165,6 +165,7 @@ private:
     
     std::pair<winrt::com_ptr<IWorkArea>, ZoneIndexSet> GetAppZoneHistoryInfo(HWND window, HMONITOR monitor, const std::unordered_map<HMONITOR, winrt::com_ptr<IWorkArea>>& workAreaMap) noexcept;
     void MoveWindowIntoZone(HWND window, winrt::com_ptr<IWorkArea> workArea, const ZoneIndexSet& zoneIndexSet) noexcept;
+    void MoveWindowIntoZoneByCursor(HWND window) noexcept;
     bool MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primary) noexcept;
 
     void OnEditorExitEvent() noexcept;
@@ -328,6 +329,21 @@ void FancyZones::MoveWindowIntoZone(HWND window, winrt::com_ptr<IWorkArea> workA
     AppZoneHistory::instance().UpdateProcessIdToHandleMap(window, workArea->UniqueId());
 }
 
+void FancyZones::MoveWindowIntoZoneByCursor(HWND window) noexcept
+{
+	POINT ptScreen;
+	GetPhysicalCursorPos(&ptScreen);
+
+	auto workArea = m_workAreaHandler.GetWorkAreaFromCursor(VirtualDesktop::instance().GetCurrentVirtualDesktopId());
+    
+    if (workArea)
+    {
+        Trace::FancyZones::SnapNewWindowIntoZone(workArea->ZoneSet());
+    }
+    m_windowMoveHandler.MoveWindowIntoZoneByCursor(window, ptScreen, workArea);
+    AppZoneHistory::instance().UpdateProcessIdToHandleMap(window, workArea->UniqueId());
+}
+
 bool FancyZones::MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primary) noexcept
 {
     auto workAreaMap = m_workAreaHandler.GetWorkAreasByDesktopId(VirtualDesktop::instance().GetCurrentVirtualDesktopId());
@@ -361,8 +377,12 @@ bool FancyZones::MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primar
     }
     else
     {
-        Logger::trace(L"App zone history is empty for the processing window on a current virtual desktop");
+        // No application history exists, so place the window into the zone under the mouse cursor
+        MoveWindowIntoZoneByCursor(window);
+        return true;
     }
+
+	Logger::trace(L"App zone history is empty for the processing window on a current virtual desktop");
 
     return false;
 }
