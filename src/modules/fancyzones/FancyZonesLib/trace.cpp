@@ -40,6 +40,7 @@
 #define EditorLaunchValueKey "Value"
 #define ShiftDragKey "ShiftDrag"
 #define MouseSwitchKey "MouseSwitch"
+#define MoveToWindowUnderZone "MoveToWindowUnderZone"
 #define MoveWindowsOnDisplayChangeKey "MoveWindowsOnDisplayChange"
 #define MaximizeInZoneKey "MaximizeInZone"
 #define AutoZoneNewWindowsKey "AutoZoneNewWindows"
@@ -49,6 +50,7 @@
 #define MoveWindowAcrossMonitorsKey "MoveWindowAcrossMonitors"
 #define MoveWindowsBasedOnPositionKey "MoveWindowsBasedOnPosition"
 #define MoveWindowsToLastZoneOnAppOpeningKey "MoveWindowsToLastZoneOnAppOpening"
+#define MoveToZoneUnderMouseKey "MoveToZoneUnderMouseKey"
 #define OpenWindowOnActiveMonitorKey "OpenWindowOnActiveMonitor"
 #define RestoreSizeKey "RestoreSize"
 #define QuickLayoutSwitchKey "QuickLayoutSwitch"
@@ -323,6 +325,7 @@ void Trace::SettingsTelemetry(const Settings& settings) noexcept
         TraceLoggingBoolean(settings.moveWindowAcrossMonitors, MoveWindowAcrossMonitorsKey),
         TraceLoggingBoolean(settings.moveWindowsBasedOnPosition, MoveWindowsBasedOnPositionKey),
         TraceLoggingBoolean(settings.appLastZone_moveWindows, MoveWindowsToLastZoneOnAppOpeningKey),
+        TraceLoggingBoolean(settings.moveToZoneUnderMouse, MoveToZoneUnderMouseKey),
         TraceLoggingBoolean(settings.openWindowOnActiveMonitor, OpenWindowOnActiveMonitorKey),
         TraceLoggingBoolean(settings.restoreSize, RestoreSizeKey),
         TraceLoggingBoolean(settings.quickLayoutSwitch, QuickLayoutSwitchKey),

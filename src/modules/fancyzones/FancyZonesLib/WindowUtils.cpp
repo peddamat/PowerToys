@@ -206,6 +206,13 @@ bool FancyZonesWindowUtils::HasThickFrameAndMinimizeMaximizeButtons(HWND window)
         && (style & WS_MAXIMIZEBOX) == WS_MAXIMIZEBOX);
 }
 
+std::wstring FancyZonesWindowUtils::ProcessForWindow(HWND window)
+{
+    std::wstring processPath = get_process_path_waiting_uwp(window);
+    CharUpperBuffW(const_cast<std::wstring&>(processPath).data(), (DWORD)processPath.length());
+    return processPath;
+}
+
 bool FancyZonesWindowUtils::IsCandidateForZoning(HWND window)
 {
     bool isStandard = IsStandardWindow(window);

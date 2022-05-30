@@ -35,6 +35,7 @@ struct Settings
     bool moveWindowAcrossMonitors = false;
     bool moveWindowsBasedOnPosition = false;
     bool appLastZone_moveWindows = false;
+    bool moveToZoneUnderMouse = false;
     bool openWindowOnActiveMonitor = false;
     bool restoreSize = false;
     bool quickLayoutSwitch = true;

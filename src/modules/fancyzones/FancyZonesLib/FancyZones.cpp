@@ -165,6 +165,7 @@ private:
     
     std::pair<winrt::com_ptr<IWorkArea>, ZoneIndexSet> GetAppZoneHistoryInfo(HWND window, HMONITOR monitor, const std::unordered_map<HMONITOR, winrt::com_ptr<IWorkArea>>& workAreaMap) noexcept;
     void MoveWindowIntoZone(HWND window, winrt::com_ptr<IWorkArea> workArea, const ZoneIndexSet& zoneIndexSet) noexcept;
+    void MoveWindowIntoZoneByCursor(HWND window) noexcept;
     bool MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primary) noexcept;
 
     void OnEditorExitEvent() noexcept;
@@ -328,6 +329,21 @@ void FancyZones::MoveWindowIntoZone(HWND window, winrt::com_ptr<IWorkArea> workA
     AppZoneHistory::instance().UpdateProcessIdToHandleMap(window, workArea->UniqueId());
 }
 
+void FancyZones::MoveWindowIntoZoneByCursor(HWND window) noexcept
+{
+	POINT ptScreen;
+	GetPhysicalCursorPos(&ptScreen);
+
+	auto workArea = m_workAreaHandler.GetWorkAreaFromCursor(VirtualDesktop::instance().GetCurrentVirtualDesktopId());
+    
+    if (workArea)
+    {
+        Trace::FancyZones::SnapNewWindowIntoZone(workArea->ZoneSet());
+    }
+    m_windowMoveHandler.MoveWindowIntoZoneByCursor(window, ptScreen, workArea);
+    AppZoneHistory::instance().UpdateProcessIdToHandleMap(window, workArea->UniqueId());
+}
+
 bool FancyZones::MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primary) noexcept
 {
     auto workAreaMap = m_workAreaHandler.GetWorkAreasByDesktopId(VirtualDesktop::instance().GetCurrentVirtualDesktopId());
@@ -359,10 +375,7 @@ bool FancyZones::MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primar
         MoveWindowIntoZone(window, appZoneHistoryInfo.first, appZoneHistoryInfo.second);
         return true;
     }
-    else
-    {
-        Logger::trace(L"App zone history is empty for the processing window on a current virtual desktop");
-    }
+	Logger::trace(L"App zone history is empty for the processing window on a current virtual desktop");
 
     return false;
 }
@@ -370,6 +383,7 @@ bool FancyZones::MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primar
 void FancyZones::WindowCreated(HWND window) noexcept
 {
     const bool moveToAppLastZone = FancyZonesSettings::settings().appLastZone_moveWindows;
+    const bool moveToZoneUnderMouse = FancyZonesSettings::settings().moveToZoneUnderMouse;
     const bool openOnActiveMonitor = FancyZonesSettings::settings().openWindowOnActiveMonitor;
     if (!moveToAppLastZone && !openOnActiveMonitor)
     {
@@ -405,15 +419,34 @@ void FancyZones::WindowCreated(HWND window) noexcept
         active = MonitorFromPoint(cursorPosition, MONITOR_DEFAULTTOPRIMARY);
     }
 
-    bool movedToAppLastZone = false;
-    if (moveToAppLastZone)
+    bool windowHasMoved = false;
+    if (moveToZoneUnderMouse)
     {
-        movedToAppLastZone = MoveToAppLastZone(window, active, primary);
+        // First check if we currently have a sibling window of the same application active...
+        auto windowUnderCursor = WindowFromPoint(cursorPosition);
+        if (FancyZonesWindowUtils::ProcessForWindow(windowUnderCursor) == FancyZonesWindowUtils::ProcessForWindow(window))
+        {
+            // .. if so, move the sibling window over its sister
+            MoveWindowIntoZoneByCursor(window);
+            windowHasMoved = true;
+        }
     }
 
-    // Open on active monitor if window wasn't zoned
-    if (openOnActiveMonitor && !movedToAppLastZone)
+    if (moveToAppLastZone && !windowHasMoved)
     {
+        // .. if not, move the window to its last known zone
+		windowHasMoved = MoveToAppLastZone(window, active, primary);
+    }
+
+	// No application history exists, so place the window into the zone under the mouse cursor
+    if (moveToZoneUnderMouse && !windowHasMoved)
+    {
+        MoveWindowIntoZoneByCursor(window);
+    }
+    // Open on active monitor if window wasn't zoned
+    else if (openOnActiveMonitor && !windowHasMoved)
+    {
+		// Open on active monitor if window wasn't zoned
         m_dpiUnawareThread.submit(OnThreadExecutor::task_t{ [&] { MonitorUtils::OpenWindowOnActiveMonitor(window, active); } }).wait();
     }
 }

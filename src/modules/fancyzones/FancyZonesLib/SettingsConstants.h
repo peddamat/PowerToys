@@ -13,6 +13,7 @@ enum class SettingId
     MaximizeInZone,
     ZoneSetChangeMoveWindows,
     AppLastZoneMoveWindows,
+    MoveToZoneUnderMouse,
     OpenWindowOnActiveMonitor,
     RestoreWindowSize,
     QuickLayoutSwitch,
