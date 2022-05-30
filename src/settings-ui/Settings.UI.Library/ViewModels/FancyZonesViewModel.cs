@@ -77,6 +77,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library.ViewModels
             _moveWindowBehaviour = Settings.Properties.FancyzonesMoveWindowsBasedOnPosition.Value ? MoveWindowBehaviour.MoveWindowBasedOnPosition : MoveWindowBehaviour.MoveWindowBasedOnZoneIndex;
             _overlappingZonesAlgorithm = (OverlappingZonesAlgorithm)Settings.Properties.FancyzonesOverlappingZonesAlgorithm.Value;
             _displayChangemoveWindows = Settings.Properties.FancyzonesDisplayChangeMoveWindows.Value;
+            _maximizeInZone = Settings.Properties.FancyzonesMaximizeInZone.Value;
             _zoneSetChangeMoveWindows = Settings.Properties.FancyzonesZoneSetChangeMoveWindows.Value;
             _appLastZoneMoveWindows = Settings.Properties.FancyzonesAppLastZoneMoveWindows.Value;
             _openWindowOnActiveMonitor = Settings.Properties.FancyzonesOpenWindowOnActiveMonitor.Value;
@@ -146,6 +147,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library.ViewModels
         private bool _showZoneNumber;
         private bool _allowPopupWindowSnap;
         private bool _allowChildWindowSnap;
+        private bool _maximizeInZone;
         private bool _disableRoundCornersOnSnap;
 
         private int _highlightOpacity;
@@ -356,6 +358,24 @@ namespace Microsoft.PowerToys.Settings.UI.Library.ViewModels
                 {
                     _displayChangemoveWindows = value;
                     Settings.Properties.FancyzonesDisplayChangeMoveWindows.Value = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+
+        public bool MaximizeInZone
+        {
+            get
+            {
+                return _maximizeInZone;
+            }
+
+            set
+            {
+                if (value != _maximizeInZone)
+                {
+                    _maximizeInZone = value;
+                    Settings.Properties.FancyzonesMaximizeInZone.Value = value;
                     NotifyPropertyChanged();
                 }
             }

@@ -433,6 +433,10 @@
     <value>Keep windows in their zones when the screen resolution changes</value>
     <comment>windows refers to application windows</comment>
   </data>
+  <data name="FancyZones_MaximizeInZone.Content" xml:space="preserve">
+    <value>Keep windows in their zones when maximizing them</value>
+    <comment>windows refers to application windows</comment>
+  </data>
   <data name="FancyZones_EnableToggleControl_HeaderText.Header" xml:space="preserve">
     <value>Enable FancyZones</value>
     <comment>do not loc the Product name.  Do you want this feature on / off</comment>

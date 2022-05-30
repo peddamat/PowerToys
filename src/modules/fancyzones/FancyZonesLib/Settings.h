@@ -27,6 +27,7 @@ struct Settings
     bool shiftDrag = true;
     bool mouseSwitch = false;
     bool displayChange_moveWindows = false;
+    bool maximizeInZone = false;
     bool zoneSetChange_flashZones = false;
     bool zoneSetChange_moveWindows = false;
     bool overrideSnapHotkeys = false;

@@ -34,6 +34,7 @@ public:
     Id() const noexcept { return m_config.Id; }
     IFACEMETHODIMP_(FancyZonesDataTypes::ZoneSetLayoutType)
     LayoutType() const noexcept { return m_config.LayoutType; }
+    IFACEMETHODIMP_(ZoneIndexSet) GetAllZones() const noexcept;
     IFACEMETHODIMP_(ZoneIndexSet) ZonesFromPoint(POINT pt) const noexcept;
     IFACEMETHODIMP_(ZoneIndexSet) GetZoneIndexSetFromWindow(HWND window) const noexcept;
     IFACEMETHODIMP_(ZonesMap) GetZones()const noexcept override { return m_zones; }
@@ -79,6 +80,19 @@ private:
 
     ZoneSetConfig m_config;
 };
+
+IFACEMETHODIMP_(ZoneIndexSet)
+ZoneSet::GetAllZones() const noexcept
+{
+    ZoneIndexSet capturedZones;
+    for (const auto& [zoneId, zone] : m_zones)
+    {
+		capturedZones.emplace_back(zoneId);
+    }
+
+    return capturedZones;
+}
+
 
 IFACEMETHODIMP_(ZoneIndexSet)
 ZoneSet::ZonesFromPoint(POINT pt) const noexcept
