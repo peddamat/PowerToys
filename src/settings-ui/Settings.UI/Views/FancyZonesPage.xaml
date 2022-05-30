@@ -178,6 +178,7 @@
                                 <CheckBox x:Uid="FancyZones_ZoneSetChangeMoveWindows" IsChecked="{x:Bind Mode=TwoWay, Path=ViewModel.ZoneSetChangeMoveWindows}" Margin="{StaticResource ExpanderSettingMargin}"/>
                                 <Rectangle Style="{StaticResource ExpanderSeparatorStyle}" />
                                 <CheckBox x:Uid="FancyZones_AppLastZoneMoveWindows" IsChecked="{x:Bind Mode=TwoWay, Path=ViewModel.AppLastZoneMoveWindows}" Margin="{StaticResource ExpanderSettingMargin}"/>
+                                <CheckBox x:Uid="FancyZones_MoveToZoneUnderMouse" IsChecked="{x:Bind Mode=TwoWay, Path=ViewModel.MoveToZoneUnderMouse}" Margin="{StaticResource ExpanderSettingMargin}"/>
                                 <Rectangle Style="{StaticResource ExpanderSeparatorStyle}" />
                                 <CheckBox x:Uid="FancyZones_OpenWindowOnActiveMonitor" IsChecked="{ Binding Mode=TwoWay, Path=OpenWindowOnActiveMonitor}" Margin="{StaticResource ExpanderSettingMargin}"/>
                                 <Rectangle Style="{StaticResource ExpanderSeparatorStyle}" />

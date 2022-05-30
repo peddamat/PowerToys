@@ -511,6 +511,10 @@
     <value>Move newly created windows to their last known zone</value>
     <comment>windows refers to application windows</comment>
   </data>
+  <data name="FancyZones_MoveToZoneUnderMouse.Content" xml:space="preserve">
+    <value>Move newly created windows to zone under mouse</value>
+    <comment>windows refers to application windows</comment>
+  </data>
   <data name="FancyZones_OpenWindowOnActiveMonitor.Content" xml:space="preserve">
     <value>Move newly created windows to the current active monitor (Experimental)</value>
   </data>

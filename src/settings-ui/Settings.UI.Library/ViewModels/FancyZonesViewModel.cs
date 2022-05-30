@@ -79,6 +79,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library.ViewModels
             _displayChangemoveWindows = Settings.Properties.FancyzonesDisplayChangeMoveWindows.Value;
             _zoneSetChangeMoveWindows = Settings.Properties.FancyzonesZoneSetChangeMoveWindows.Value;
             _appLastZoneMoveWindows = Settings.Properties.FancyzonesAppLastZoneMoveWindows.Value;
+            _moveToZoneUnderMouse = Settings.Properties.FancyzonesMoveToZoneUnderMouse.Value;
             _openWindowOnActiveMonitor = Settings.Properties.FancyzonesOpenWindowOnActiveMonitor.Value;
             _restoreSize = Settings.Properties.FancyzonesRestoreSize.Value;
             _quickLayoutSwitch = Settings.Properties.FancyzonesQuickLayoutSwitch.Value;
@@ -134,6 +135,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library.ViewModels
         private bool _displayChangemoveWindows;
         private bool _zoneSetChangeMoveWindows;
         private bool _appLastZoneMoveWindows;
+        private bool _moveToZoneUnderMouse;
         private bool _openWindowOnActiveMonitor;
         private bool _spanZonesAcrossMonitors;
         private bool _restoreSize;
@@ -392,6 +394,24 @@ namespace Microsoft.PowerToys.Settings.UI.Library.ViewModels
                 {
                     _appLastZoneMoveWindows = value;
                     Settings.Properties.FancyzonesAppLastZoneMoveWindows.Value = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+
+        public bool MoveToZoneUnderMouse
+        {
+            get
+            {
+                return _moveToZoneUnderMouse;
+            }
+
+            set
+            {
+                if (value != _moveToZoneUnderMouse)
+                {
+                    _moveToZoneUnderMouse = value;
+                    Settings.Properties.FancyzonesMoveToZoneUnderMouse.Value = value;
                     NotifyPropertyChanged();
                 }
             }

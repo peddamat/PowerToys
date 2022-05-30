@@ -375,13 +375,6 @@ bool FancyZones::MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primar
         MoveWindowIntoZone(window, appZoneHistoryInfo.first, appZoneHistoryInfo.second);
         return true;
     }
-    else
-    {
-        // No application history exists, so place the window into the zone under the mouse cursor
-        MoveWindowIntoZoneByCursor(window);
-        return true;
-    }
-
 	Logger::trace(L"App zone history is empty for the processing window on a current virtual desktop");
 
     return false;
@@ -390,6 +383,7 @@ bool FancyZones::MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primar
 void FancyZones::WindowCreated(HWND window) noexcept
 {
     const bool moveToAppLastZone = FancyZonesSettings::settings().appLastZone_moveWindows;
+    const bool moveToZoneUnderMouse = FancyZonesSettings::settings().moveToZoneUnderMouse;
     const bool openOnActiveMonitor = FancyZonesSettings::settings().openWindowOnActiveMonitor;
     if (!moveToAppLastZone && !openOnActiveMonitor)
     {
@@ -431,8 +425,13 @@ void FancyZones::WindowCreated(HWND window) noexcept
         movedToAppLastZone = MoveToAppLastZone(window, active, primary);
     }
 
+	// No application history exists, so place the window into the zone under the mouse cursor
+    if (moveToZoneUnderMouse && !movedToAppLastZone)
+    {
+        MoveWindowIntoZoneByCursor(window);
+    }
     // Open on active monitor if window wasn't zoned
-    if (openOnActiveMonitor && !movedToAppLastZone)
+    else if (openOnActiveMonitor && !movedToAppLastZone)
     {
         m_dpiUnawareThread.submit(OnThreadExecutor::task_t{ [&] { MonitorUtils::OpenWindowOnActiveMonitor(window, active); } }).wait();
     }

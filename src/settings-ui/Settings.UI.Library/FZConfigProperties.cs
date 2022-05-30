@@ -29,6 +29,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library
             FancyzonesDisplayChangeMoveWindows = new BoolProperty();
             FancyzonesZoneSetChangeMoveWindows = new BoolProperty();
             FancyzonesAppLastZoneMoveWindows = new BoolProperty();
+            FancyzonesMoveToZoneUnderMouse = new BoolProperty();
             FancyzonesOpenWindowOnActiveMonitor = new BoolProperty();
             FancyzonesRestoreSize = new BoolProperty();
             FancyzonesQuickLayoutSwitch = new BoolProperty(ConfigDefaults.DefaultFancyzonesQuickLayoutSwitch);
@@ -77,6 +78,9 @@ namespace Microsoft.PowerToys.Settings.UI.Library
 
         [JsonPropertyName("fancyzones_zoneSetChange_moveWindows")]
         public BoolProperty FancyzonesZoneSetChangeMoveWindows { get; set; }
+
+        [JsonPropertyName("fancyzones_moveToZoneUnderMouse")]
+        public BoolProperty FancyzonesMoveToZoneUnderMouse { get; set; }
 
         [JsonPropertyName("fancyzones_appLastZone_moveWindows")]
         public BoolProperty FancyzonesAppLastZoneMoveWindows { get; set; }

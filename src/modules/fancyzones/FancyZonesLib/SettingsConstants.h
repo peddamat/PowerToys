@@ -11,6 +11,7 @@ enum class SettingId
     DisplayChangeMoveWindows,
     ZoneSetChangeMoveWindows,
     AppLastZoneMoveWindows,
+    MoveToZoneUnderMouse,
     OpenWindowOnActiveMonitor,
     RestoreWindowSize,
     QuickLayoutSwitch,
