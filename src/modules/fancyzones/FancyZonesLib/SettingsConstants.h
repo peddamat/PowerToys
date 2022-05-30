@@ -8,6 +8,7 @@ enum class SettingId
     MoveWindowAcrossMonitors,
     MoveWindowsBasedOnPosition,
     OverlappingZonesAlgorithm,
+    AutoZoneNewWindows,
     DisplayChangeMoveWindows,
     ZoneSetChangeMoveWindows,
     AppLastZoneMoveWindows,

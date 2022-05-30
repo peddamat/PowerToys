@@ -76,6 +76,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library.ViewModels
             _moveWindowsAcrossMonitors = Settings.Properties.FancyzonesMoveWindowsAcrossMonitors.Value;
             _moveWindowBehaviour = Settings.Properties.FancyzonesMoveWindowsBasedOnPosition.Value ? MoveWindowBehaviour.MoveWindowBasedOnPosition : MoveWindowBehaviour.MoveWindowBasedOnZoneIndex;
             _overlappingZonesAlgorithm = (OverlappingZonesAlgorithm)Settings.Properties.FancyzonesOverlappingZonesAlgorithm.Value;
+            _autoZoneNewWindows = Settings.Properties.FancyzonesAutoZoneNewWindows.Value;
             _displayChangemoveWindows = Settings.Properties.FancyzonesDisplayChangeMoveWindows.Value;
             _zoneSetChangeMoveWindows = Settings.Properties.FancyzonesZoneSetChangeMoveWindows.Value;
             _appLastZoneMoveWindows = Settings.Properties.FancyzonesAppLastZoneMoveWindows.Value;
@@ -131,6 +132,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library.ViewModels
         private bool _moveWindowsAcrossMonitors;
         private MoveWindowBehaviour _moveWindowBehaviour;
         private OverlappingZonesAlgorithm _overlappingZonesAlgorithm;
+        private bool _autoZoneNewWindows;
         private bool _displayChangemoveWindows;
         private bool _zoneSetChangeMoveWindows;
         private bool _appLastZoneMoveWindows;
@@ -338,6 +340,24 @@ namespace Microsoft.PowerToys.Settings.UI.Library.ViewModels
                 {
                     _overlappingZonesAlgorithm = (OverlappingZonesAlgorithm)value;
                     Settings.Properties.FancyzonesOverlappingZonesAlgorithm.Value = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+
+        public bool AutoZoneNewWindows
+        {
+            get
+            {
+                return _autoZoneNewWindows;
+            }
+
+            set
+            {
+                if (value != _autoZoneNewWindows)
+                {
+                    _autoZoneNewWindows = value;
+                    Settings.Properties.FancyzonesAutoZoneNewWindows.Value = value;
                     NotifyPropertyChanged();
                 }
             }

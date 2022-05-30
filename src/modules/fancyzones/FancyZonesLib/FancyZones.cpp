@@ -901,7 +901,7 @@ void FancyZones::UpdateWindowsPositions(bool suppressMove) noexcept
             else
             {
                 // If the window isn't already in any zones, figure out the best zone to add it to
-                if (FancyZonesWindowUtils::IsCandidateForZoning(window))
+                if (FancyZonesSettings::settings().autoZoneNewWindows && FancyZonesWindowUtils::IsCandidateForZoning(window))
                 {
                     // Find the center of the window
                     RECT windowRect;
