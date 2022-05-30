@@ -173,6 +173,8 @@
                         </controls:SettingExpander.Header>
                         <controls:SettingExpander.Content>
                             <StackPanel>
+                                <CheckBox x:Uid="FancyZones_AutoZoneNewWindows" IsChecked="{x:Bind Mode=TwoWay, Path=ViewModel.AutoZoneNewWindows}" Margin="{StaticResource ExpanderSettingMargin}"/>
+                                <Rectangle Style="{StaticResource ExpanderSeparatorStyle}" />
                                 <CheckBox x:Uid="FancyZones_DisplayChangeMoveWindowsCheckBoxControl" IsChecked="{x:Bind Mode=TwoWay, Path=ViewModel.DisplayChangeMoveWindows}" Margin="{StaticResource ExpanderSettingMargin}"/>
                                 <Rectangle Style="{StaticResource ExpanderSeparatorStyle}" />
                                 <CheckBox x:Uid="FancyZones_MaximizeInZone" IsChecked="{x:Bind Mode=TwoWay, Path=ViewModel.MaximizeInZone}" Margin="{StaticResource ExpanderSettingMargin}"/>

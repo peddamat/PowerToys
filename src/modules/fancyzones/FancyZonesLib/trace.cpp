@@ -42,6 +42,7 @@
 #define MouseSwitchKey "MouseSwitch"
 #define MoveWindowsOnDisplayChangeKey "MoveWindowsOnDisplayChange"
 #define MaximizeInZoneKey "MaximizeInZone"
+#define AutoZoneNewWindowsKey "AutoZoneNewWindows"
 #define FlashZonesOnZoneSetChangeKey "FlashZonesOnZoneSetChange"
 #define MoveWindowsOnZoneSetChangeKey "MoveWindowsOnZoneSetChange"
 #define OverrideSnapHotKeysKey "OverrideSnapHotKeys"
@@ -313,6 +314,7 @@ void Trace::SettingsTelemetry(const Settings& settings) noexcept
         TraceLoggingKeyword(PROJECT_KEYWORD_MEASURE),
         TraceLoggingBoolean(settings.shiftDrag, ShiftDragKey),
         TraceLoggingBoolean(settings.mouseSwitch, MouseSwitchKey),
+        TraceLoggingBoolean(settings.autoZoneNewWindows, AutoZoneNewWindowsKey),
         TraceLoggingBoolean(settings.displayChange_moveWindows, MoveWindowsOnDisplayChangeKey),
         TraceLoggingBoolean(settings.maximizeInZone, MaximizeInZoneKey),
         TraceLoggingBoolean(settings.zoneSetChange_flashZones, FlashZonesOnZoneSetChangeKey),

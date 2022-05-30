@@ -21,6 +21,7 @@ namespace NonLocalizable
     const wchar_t MoveWindowAcrossMonitorsID[] = L"fancyzones_moveWindowAcrossMonitors";
     const wchar_t MoveWindowsBasedOnPositionID[] = L"fancyzones_moveWindowsBasedOnPosition";
     const wchar_t OverlappingZonesAlgorithmID[] = L"fancyzones_overlappingZonesAlgorithm";
+    const wchar_t AutoZoneNewWindowsID[] = L"fancyzones_autoZoneNewWindows";
     const wchar_t DisplayChangeMoveWindowsID[] = L"fancyzones_displayChange_moveWindows";
     const wchar_t MaximizeInZone[] = L"fancyzones_maximizeInZone";
     const wchar_t ZoneSetChangeMoveWindowsID[] = L"fancyzones_zoneSetChange_moveWindows";
@@ -112,6 +113,7 @@ void FancyZonesSettings::LoadSettings()
         SetBoolFlag(values, NonLocalizable::OverrideSnapHotKeysID, SettingId::OverrideSnapHotkeys, m_settings.overrideSnapHotkeys);
         SetBoolFlag(values, NonLocalizable::MoveWindowAcrossMonitorsID, SettingId::MoveWindowAcrossMonitors, m_settings.moveWindowAcrossMonitors);
         SetBoolFlag(values, NonLocalizable::MoveWindowsBasedOnPositionID, SettingId::MoveWindowsBasedOnPosition, m_settings.moveWindowsBasedOnPosition);
+        SetBoolFlag(values, NonLocalizable::AutoZoneNewWindowsID, SettingId::AutoZoneNewWindows, m_settings.autoZoneNewWindows);
         SetBoolFlag(values, NonLocalizable::DisplayChangeMoveWindowsID, SettingId::DisplayChangeMoveWindows, m_settings.displayChange_moveWindows);
         SetBoolFlag(values, NonLocalizable::MaximizeInZone, SettingId::MaximizeInZone, m_settings.maximizeInZone);
         SetBoolFlag(values, NonLocalizable::ZoneSetChangeMoveWindowsID, SettingId::ZoneSetChangeMoveWindows, m_settings.zoneSetChange_moveWindows);
