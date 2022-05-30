@@ -513,6 +513,7 @@ void WorkArea::CalculateZoneSet(OverlappingZonesAlgorithm overlappingAlgorithm) 
     const auto appliedLayout = AppliedLayouts::instance().GetDeviceLayout(m_uniqueId);
     if (!appliedLayout.has_value())
     {
+        Logger::error(L"Layout wasn't applied. Can't init zone set");
         return;
     }
 
