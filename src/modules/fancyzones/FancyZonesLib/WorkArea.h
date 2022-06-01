@@ -46,7 +46,7 @@ interface __declspec(uuid("{7F017528-8110-4FB3-BE41-F472969C2560}")) IWorkArea :
      */
     IFACEMETHOD_(void, MoveWindowIntoZoneByIndex)(HWND window, ZoneIndex index) = 0;
     /**
-     * Assign window to the zones based on the current position of mouse cursor.
+     * Assign window to the zone based on which zone exists is at a point.
      *
      * @param   window   Handle of window which should be assigned to zone.
      * @param   ptScreen Cursor coordinates.
