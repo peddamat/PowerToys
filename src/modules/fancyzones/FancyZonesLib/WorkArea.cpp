@@ -236,7 +236,6 @@ IFACEMETHODIMP WorkArea::MoveSizeUpdate(POINT const& ptScreen, bool dragEnabled,
 {
     bool redraw = false;
     POINT ptClient = ptScreen;
-    MapWindowPoints(nullptr, m_window, &ptClient, 1);
 
     if (dragEnabled)
     {
@@ -310,10 +309,7 @@ WorkArea::MoveWindowIntoZoneByIndex(HWND window, ZoneIndex index) noexcept
 IFACEMETHODIMP_(void)
 WorkArea::MoveWindowIntoZoneByPoint(HWND window, POINT const& ptScreen) noexcept
 {
-    POINT ptClient = ptScreen;
-    MapWindowPoints(nullptr, m_window, &ptClient, 1);
-
-	MoveWindowIntoZoneByIndexSet(window, ZonesFromPoint(ptClient));
+	MoveWindowIntoZoneByIndexSet(window, ZonesFromPoint(ptScreen));
 }
 
 IFACEMETHODIMP_(void)
@@ -580,6 +576,10 @@ LRESULT WorkArea::WndProc(UINT message, WPARAM wparam, LPARAM lparam) noexcept
 
 ZoneIndexSet WorkArea::ZonesFromPoint(POINT pt) noexcept
 {
+    // Translate the point coords to the workArea's coords, which
+    //  is important for workAreas on external displays...
+    MapWindowPoints(nullptr, m_window, &pt, 1);
+
     if (m_zoneSet)
     {
         return m_zoneSet->ZonesFromPoint(pt);
