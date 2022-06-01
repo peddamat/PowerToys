@@ -766,8 +766,7 @@ LRESULT FancyZones::WndProc(HWND window, UINT message, WPARAM wparam, LPARAM lpa
                         else
                         {
                             // ... otherwise, resize window to zone the mouse cursor is in
-                            auto zones = zoneSet->ZonesFromPoint(ptScreen);
-                            MoveWindowIntoZone(hwnd, workArea, zones);
+                            MoveWindowIntoZoneByPoint(hwnd, ptScreen);
                         }
                     }
                 }
