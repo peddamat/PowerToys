@@ -165,6 +165,7 @@ private:
     
     std::pair<winrt::com_ptr<IWorkArea>, ZoneIndexSet> GetAppZoneHistoryInfo(HWND window, HMONITOR monitor, const std::unordered_map<HMONITOR, winrt::com_ptr<IWorkArea>>& workAreaMap) noexcept;
     void MoveWindowIntoZone(HWND window, winrt::com_ptr<IWorkArea> workArea, const ZoneIndexSet& zoneIndexSet) noexcept;
+    void MoveWindowIntoZoneByPoint(HWND window, POINT pt) noexcept;
     bool MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primary) noexcept;
 
     void OnEditorExitEvent() noexcept;
@@ -325,6 +326,18 @@ void FancyZones::MoveWindowIntoZone(HWND window, winrt::com_ptr<IWorkArea> workA
         Trace::FancyZones::SnapNewWindowIntoZone(workArea->ZoneSet());
     }
     m_windowMoveHandler.MoveWindowIntoZoneByIndexSet(window, zoneIndexSet, workArea);
+    AppZoneHistory::instance().UpdateProcessIdToHandleMap(window, workArea->UniqueId());
+}
+
+void FancyZones::MoveWindowIntoZoneByPoint(HWND window, POINT pt) noexcept
+{
+	auto workArea = m_workAreaHandler.GetWorkAreaFromCursor(VirtualDesktop::instance().GetCurrentVirtualDesktopId());
+    
+    if (workArea)
+    {
+        Trace::FancyZones::SnapNewWindowIntoZone(workArea->ZoneSet());
+    }
+    m_windowMoveHandler.MoveWindowIntoZoneByPoint(window, pt, workArea);
     AppZoneHistory::instance().UpdateProcessIdToHandleMap(window, workArea->UniqueId());
 }
 

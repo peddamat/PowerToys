@@ -292,6 +292,14 @@ void WindowMoveHandler::MoveSizeEnd(HWND window, POINT const& ptScreen, const st
     }
 }
 
+void WindowMoveHandler::MoveWindowIntoZoneByPoint(HWND window, POINT const& ptScreen, winrt::com_ptr<IWorkArea> workArea) noexcept
+{
+    if (workArea)
+    {
+        workArea->MoveWindowIntoZoneByPoint(window, ptScreen);
+    }
+}
+
 void WindowMoveHandler::MoveWindowIntoZoneByIndexSet(HWND window, const ZoneIndexSet& indexSet, winrt::com_ptr<IWorkArea> workArea, bool suppressMove) noexcept
 {
     if (window != m_draggedWindow)
