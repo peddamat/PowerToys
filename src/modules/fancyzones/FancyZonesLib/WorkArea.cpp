@@ -119,7 +119,7 @@ public:
     IFACEMETHODIMP_(void)
     MoveWindowIntoZoneByIndexSet(HWND window, const ZoneIndexSet& indexSet, bool suppressMove = false) noexcept;
     IFACEMETHODIMP_(void)
-    MoveWindowIntoZoneByCursor(HWND window, POINT const& ptScreen) noexcept;
+    MoveWindowIntoZoneByPoint(HWND window, POINT const& ptScreen) noexcept;
     IFACEMETHODIMP_(bool)
     MoveWindowIntoZoneByDirectionAndIndex(HWND window, DWORD vkCode, bool cycle) noexcept;
     IFACEMETHODIMP_(bool)
@@ -308,7 +308,7 @@ WorkArea::MoveWindowIntoZoneByIndex(HWND window, ZoneIndex index) noexcept
 }
 
 IFACEMETHODIMP_(void)
-WorkArea::MoveWindowIntoZoneByCursor(HWND window, POINT const& ptScreen) noexcept
+WorkArea::MoveWindowIntoZoneByPoint(HWND window, POINT const& ptScreen) noexcept
 {
     POINT ptClient = ptScreen;
     MapWindowPoints(nullptr, m_window, &ptClient, 1);
