@@ -13,6 +13,31 @@ namespace ZonedWindowProperties
     const wchar_t PropertyMultipleZone128ID[] = L"FancyZones_zones_max128"; // additional property to allow maximum possible zone count = 128
 
     const wchar_t PropertySortKeyWithinZone[] = L"FancyZones_TabSortKeyWithinZone";
+
+    const wchar_t PropertyZoneSizeID[] = L"FancyZones_ZoneSize";
+	const wchar_t PropertyZoneOriginID[] = L"FancyZones_ZoneOrigin";
+}
+
+// Based on FancyZonesWindowUtils::SaveWindowSizeAndOrigin(HWND window)
+BOOL FancyZonesWindowProperties::StampZoneDimensions(HWND window, const RECT& rect)
+{
+	float width = static_cast<float>(rect.right - rect.left);
+	float height = static_cast<float>(rect.bottom - rect.top);
+	float originX = static_cast<float>(rect.left);
+	float originY = static_cast<float>(rect.top);
+
+	//DPIAware::InverseConvert(MonitorFromWindow(window, MONITOR_DEFAULTTONULL), width, height);
+	//DPIAware::InverseConvert(MonitorFromWindow(window, MONITOR_DEFAULTTONULL), originX, originY);
+
+	std::array<int, 2> windowSizeData = { static_cast<int>(width), static_cast<int>(height) };
+	std::array<int, 2> windowOriginData = { static_cast<int>(originX), static_cast<int>(originY) };
+	HANDLE rawData;
+	memcpy(&rawData, windowSizeData.data(), sizeof rawData);
+	SetPropW(window, ZonedWindowProperties::PropertyZoneSizeID, rawData);
+	memcpy(&rawData, windowOriginData.data(), sizeof rawData);
+	SetPropW(window, ZonedWindowProperties::PropertyZoneOriginID, rawData);
+
+	return true;
 }
 
 void FancyZonesWindowProperties::StampZoneIndexProperty(HWND window, const ZoneIndexSet& zoneSet)
@@ -57,6 +82,9 @@ void FancyZonesWindowProperties::RemoveZoneIndexProperty(HWND window)
 {
     ::RemoveProp(window, ZonedWindowProperties::PropertyMultipleZone64ID);
     ::RemoveProp(window, ZonedWindowProperties::PropertyMultipleZone128ID);
+
+    //::RemoveProp(window, ZonedWindowProperties::PropertyZoneOriginID);
+    //::RemoveProp(window, ZonedWindowProperties::PropertyZoneSizeID);
 }
 
 ZoneIndexSet FancyZonesWindowProperties::RetrieveZoneIndexProperty(HWND window)

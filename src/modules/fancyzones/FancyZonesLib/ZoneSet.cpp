@@ -264,6 +264,9 @@ ZoneSet::MoveWindowIntoZoneByIndexSet(HWND window, HWND workAreaWindow, const Zo
             {
                 FancyZonesWindowUtils::DisableRoundCorners(window);
             }
+
+			// Save the final dimensions 
+			FancyZonesWindowProperties::StampZoneDimensions(window, rect);
         }
 
         FancyZonesWindowProperties::StampZoneIndexProperty(window, indexSet);

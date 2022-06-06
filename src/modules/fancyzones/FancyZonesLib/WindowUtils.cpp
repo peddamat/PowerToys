@@ -339,6 +339,9 @@ void FancyZonesWindowUtils::SizeWindowToRect(HWND window, RECT rect) noexcept
     {
         Logger::error(L"SetWindowPlacement failed, {}", get_last_error_or_default(GetLastError()));
     }
+
+    // Save the final dimensions 
+	//FancyZonesWindowProperties::StampZoneDimensions(window, rect);
 }
 
 void FancyZonesWindowUtils::SaveWindowSizeAndOrigin(HWND window) noexcept
