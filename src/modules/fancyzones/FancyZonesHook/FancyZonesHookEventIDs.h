@@ -1,0 +1,5 @@
+#pragma once
+
+#define WM_PRIV_HOOK_WINDOW WM_APP + 900
+#define WM_PRIV_UNHOOK_WINDOW WM_APP + 901
+#define WM_PRIV_DEEP_CLEAN WM_APP + 902

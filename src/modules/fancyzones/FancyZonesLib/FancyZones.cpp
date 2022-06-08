@@ -37,6 +37,8 @@
 
 #include <FancyZonesLib/SecondaryMouseButtonsHook.h>
 
+#include <FancyZonesHook/FancyZonesHookEventIDs.h>
+
 enum class DisplayChangeType
 {
     WorkArea,
@@ -290,10 +292,6 @@ BOOL FancyZones::HookTopLevelWindows() noexcept
 
     EnumWindows(enumWindows, reinterpret_cast<LPARAM>(&result));
 
-	//auto targetWnd = FindWindow(NULL, L"New Tab - Google Chrome");
-	//auto targetWnd = FindWindow(NULL, L"New Tab - Brave");
-    //result.push_back(targetWnd);
-
 	auto dll = LoadLibrary(L"..\\..\\FancyZonesHook.dll");
 
 	// Get the address of the hook function
@@ -312,7 +310,7 @@ BOOL FancyZones::HookTopLevelWindows() noexcept
 		Logger::info("Hooking: {}\n", (void*)window);
 
 		//PostMessage(HWND_BROADCAST, WM_USER + 900, (WPARAM)targetWnd, 0xFF);
-		PostMessage(window, WM_APP + 900, (WPARAM)window, 0xFF);
+		PostMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0);
     }
 
     //FreeLibrary(dll); 
@@ -331,11 +329,11 @@ FancyZones::Destroy() noexcept
         m_window = nullptr;
     }
 
-    for (HWND hwnd : result)
+    for (auto window : result)
     {
-        if (!SendMessage(hwnd, WM_APP + 901, (WPARAM)hwnd, 0xFF))
+        if (!SendMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0))
         {
-			Logger::info(L"Error unloading: %#010X\n", (void *)hwnd);
+			Logger::info(L"Error unloading: %#010X\n", (void *)window);
         }
     }
 

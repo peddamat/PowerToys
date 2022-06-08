@@ -253,8 +253,6 @@ bool FancyZonesWindowUtils::IsCandidateForZoning(HWND window)
         return false;
     }
 
-    Logger::info(L"Hooking: {}\n", processPath);
-
     return true;
 }
 
