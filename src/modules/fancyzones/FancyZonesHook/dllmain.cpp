@@ -19,7 +19,7 @@ bool AddHook(HWND hwnd);
 bool RemoveHook(HWND hwnd);
 LRESULT CALLBACK hookWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
-BOOL GetZoneProperties(HWND window, POINT& zoneSize, POINT& zoneOrigin) noexcept;
+BOOL GetStampedZoneProperties(HWND window, POINT& zoneSize, POINT& zoneOrigin) noexcept;
 
 void DeepClean();
 void DeepCleanByThread();
@@ -125,24 +125,41 @@ LRESULT CALLBACK hookWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lP
 	  */
 	case WM_WINDOWPOSCHANGING:
     {
-        if (WS_MAXIMIZE & GetWindowLong(window, GWL_STYLE))
-        {
-            POINT zoneSize = { 0, 0 };
-            POINT zoneOrigin = { 0, 0 };
+		// Skip if Shift is being pressed...
+        if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
+            break;
 
-            if (GetZoneProperties(window, zoneSize, zoneOrigin))
-            {
-                auto windowpos = reinterpret_cast<WINDOWPOS*>(lParam);
+		// The system sets the WS_MAXIMIZE style prior to posting a 
+		// WM_WINDOWPOSCHANGING message, which is convenient for us...
+		if (WS_MAXIMIZE & GetWindowLong(window, GWL_STYLE))
+		{
+			POINT zoneSize;
+			POINT zoneOrigin;
 
-                windowpos->x = zoneOrigin.x;
-                windowpos->y = zoneOrigin.y;
+			if (GetStampedZoneProperties(window, zoneSize, zoneOrigin))
+			{
+                RECT c;
+                GetWindowRect(window, &c);
 
-                windowpos->cx = zoneSize.x;
-                windowpos->cy = zoneSize.y;
+				auto windowpos = reinterpret_cast<WINDOWPOS*>(lParam);
 
-                return 0;
-            }
-        }
+				windowpos->x = zoneOrigin.x;
+				windowpos->y = zoneOrigin.y;
+
+				windowpos->cx = zoneSize.x;
+				windowpos->cy = zoneSize.y;
+
+				// Unset the WS_MAXIMIZE style, unless the window was already filling the zone
+                if (!((zoneOrigin.x == c.left) &&
+                      (zoneOrigin.y == c.top) &&
+                      (zoneSize.x == (c.right - c.left)) &&
+                      (zoneSize.y == (c.bottom - c.top))))
+                {
+                    SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) & ~WS_MAXIMIZE);
+                }
+				return 0;
+			}
+		}
     }
 	break;
 
@@ -195,13 +212,10 @@ bool AddHook(HWND hwnd)
 	return TRUE;
 }
 	
-bool RemoveHook(HWND hwnd)
-{
-	if (hwnd == NULL)
-	{
-		hwnd = (HWND)TlsGetValue(dwTlsIndex);
-	}
 
+// By default we retrieve the stored window handle
+bool RemoveHook(HWND hwnd = (HWND) TlsGetValue(dwTlsIndex))
+{
 	if (hwnd == NULL)
 	{
 		return TRUE;
@@ -215,6 +229,7 @@ bool RemoveHook(HWND hwnd)
 
 	return TRUE;
 }
+
 
 extern "C" __declspec(dllexport) 
 LRESULT CALLBACK getMsgProc(int code, WPARAM wParam, LPARAM lParam) {
@@ -230,12 +245,12 @@ LRESULT CALLBACK getMsgProc(int code, WPARAM wParam, LPARAM lParam) {
 
 	if (msg->message == WM_PRIV_HOOK_WINDOW)
 	{
-		auto hwnd = reinterpret_cast<HWND>(msg->wParam);
-		AddHook(hwnd);
+		auto window = reinterpret_cast<HWND>(msg->wParam);
+		AddHook(window);
 	}
 	else if (msg->message == WM_PRIV_UNHOOK_WINDOW)
 	{
-		auto hwnd = reinterpret_cast<HWND>(msg->wParam);
+		auto window = reinterpret_cast<HWND>(msg->wParam);
 		RemoveHook(NULL);
 	}
 
@@ -247,7 +262,7 @@ LRESULT CALLBACK getMsgProc(int code, WPARAM wParam, LPARAM lParam) {
 /******************************************************************************
 * Utility functions
 ******************************************************************************/
-BOOL GetZoneProperties(HWND window, POINT &zoneSize, POINT &zoneOrigin) noexcept
+BOOL GetStampedZoneProperties(HWND window, POINT &zoneSize, POINT &zoneOrigin) noexcept
 {
 	// Retrieve the zone size
     auto zsProp = GetPropW(window, PropertyZoneSizeID);

@@ -313,7 +313,6 @@ BOOL FancyZones::HookTopLevelWindows() noexcept
 		PostMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0);
     }
 
-    //FreeLibrary(dll); 
     return true;
 }
 
@@ -454,6 +453,28 @@ void FancyZones::WindowCreated(HWND window) noexcept
         // Nothing to do here then.
         return;
     }
+
+    // Add the Fancy Zones hook
+    if (FancyZonesWindowUtils::IsCandidateForZoning(window))
+    {
+        auto dll = LoadLibrary(L"..\\..\\FancyZonesHook.dll");
+
+        // Get the address of the hook function
+        auto hookAddress = (HOOKPROC)GetProcAddress(dll, "getMsgProc");
+
+        // Now get it's process and thread ID
+        DWORD procID;
+        auto threadID = GetWindowThreadProcessId(window, &procID);
+
+        // Set the hook
+        auto result = SetWindowsHookEx(WH_GETMESSAGE, hookAddress, dll, threadID);
+        m_hooks.push_back(result);
+
+        Logger::info("Hooking: {}\n", (void*)window);
+
+        PostMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0);
+    }
+
 
     if (!FancyZonesWindowProcessing::IsProcessable(window))
     {
