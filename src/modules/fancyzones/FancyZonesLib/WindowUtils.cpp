@@ -248,12 +248,27 @@ bool FancyZonesWindowUtils::IsCandidateForZoning(HWND window)
         return false;
     }
 
+    if (processPath.length() == 0)
+    {
+        return false;
+    }
+
+    Logger::info(L"Hooking: {}\n", processPath);
+
     return true;
 }
 
 bool FancyZonesWindowUtils::IsProcessOfWindowElevated(HWND window)
 {
     return is_process_of_window_elevated(window);
+}
+
+bool FancyZonesWindowUtils::IsExcludedByUserHwnd(HWND window) noexcept
+{
+    std::wstring processPath = get_process_path_waiting_uwp(window);
+    CharUpperBuffW(const_cast<std::wstring&>(processPath).data(), (DWORD)processPath.length());
+
+    return (find_app_name_in_path(processPath, FancyZonesSettings::settings().excludedAppsArray));
 }
 
 bool FancyZonesWindowUtils::IsExcludedByUser(const std::wstring& processPath) noexcept

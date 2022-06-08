@@ -173,6 +173,7 @@ private:
     bool ShouldProcessSnapHotkey(DWORD vkCode) noexcept;
     void ApplyQuickLayout(int key) noexcept;
     void FlashZones() noexcept;
+    BOOL HookTopLevelWindows() noexcept;
 
     std::vector<std::pair<HMONITOR, RECT>> GetRawMonitorData() noexcept;
     std::vector<HMONITOR> GetMonitorsSorted() noexcept;
@@ -182,6 +183,7 @@ private:
 
     const HINSTANCE m_hinstance{};
 
+    std::vector<HHOOK> m_hooks;
     HWND m_window{};
     WindowMoveHandler m_windowMoveHandler;
     MonitorWorkAreaHandler m_workAreaHandler;
@@ -268,6 +270,55 @@ FancyZones::Run() noexcept
     PostMessage(m_window, WM_PRIV_VD_INIT, 0, 0);
 }
 
+using result_t = std::vector<HWND>;
+result_t result;
+
+BOOL FancyZones::HookTopLevelWindows() noexcept
+{
+    auto enumWindows = [](HWND hwnd, LPARAM param) -> BOOL {
+
+		if (!FancyZonesWindowUtils::IsCandidateForZoning(hwnd))
+        {
+            return TRUE;
+        }
+
+		result_t& result = *reinterpret_cast<result_t*>(param);
+		result.push_back(hwnd);
+
+        return TRUE;
+    };
+
+    EnumWindows(enumWindows, reinterpret_cast<LPARAM>(&result));
+
+	//auto targetWnd = FindWindow(NULL, L"New Tab - Google Chrome");
+	//auto targetWnd = FindWindow(NULL, L"New Tab - Brave");
+    //result.push_back(targetWnd);
+
+	auto dll = LoadLibrary(L"..\\..\\FancyZonesHook.dll");
+
+	// Get the address of the hook function
+	auto hookAddress = (HOOKPROC)GetProcAddress(dll, "getMsgProc");
+
+    for (HWND window : result)
+    {
+		// Now get it's process and thread ID
+		DWORD procID;
+		auto threadID = GetWindowThreadProcessId(window, &procID);
+
+		// Set the hook
+		auto result = SetWindowsHookEx(WH_GETMESSAGE, hookAddress, dll, threadID);
+		m_hooks.push_back(result);
+
+		Logger::info("Hooking: {}\n", (void*)window);
+
+		//PostMessage(HWND_BROADCAST, WM_USER + 900, (WPARAM)targetWnd, 0xFF);
+		PostMessage(window, WM_APP + 900, (WPARAM)window, 0xFF);
+    }
+
+    //FreeLibrary(dll); 
+    return true;
+}
+
 // IFancyZones
 IFACEMETHODIMP_(void)
 FancyZones::Destroy() noexcept
@@ -278,6 +329,19 @@ FancyZones::Destroy() noexcept
     {
         DestroyWindow(m_window);
         m_window = nullptr;
+    }
+
+    for (HWND hwnd : result)
+    {
+        if (!SendMessage(hwnd, WM_APP + 901, (WPARAM)hwnd, 0xFF))
+        {
+			Logger::info(L"Error unloading: %#010X\n", (void *)hwnd);
+        }
+    }
+
+    for (HHOOK hook : m_hooks)
+    {
+        UnhookWindowsHookEx(hook);
     }
 }
 
@@ -321,6 +385,8 @@ std::pair<winrt::com_ptr<IWorkArea>, ZoneIndexSet> FancyZones::GetAppZoneHistory
 
 void FancyZones::MoveWindowIntoZone(HWND window, winrt::com_ptr<IWorkArea> workArea, const ZoneIndexSet& zoneIndexSet) noexcept
 {
+    PostMessage(window, WM_USER + 900, (WPARAM)window, 0xFF);
+
     if (workArea)
     {
         Trace::FancyZones::SnapNewWindowIntoZone(workArea->ZoneSet());
@@ -764,6 +830,7 @@ LRESULT FancyZones::WndProc(HWND window, UINT message, WPARAM wparam, LPARAM lpa
             }
             else
             {
+                break;
                 // Handle "Maximize in Zone" events
 				auto hwnd = reinterpret_cast<HWND>(wparam);
 
@@ -856,6 +923,11 @@ void FancyZones::OnDisplayChange(DisplayChangeType changeType) noexcept
         {
             UpdateWindowsPositions();
         }
+    }
+
+    if (changeType == DisplayChangeType::Initialization)
+    {
+        HookTopLevelWindows();
     }
 }
 

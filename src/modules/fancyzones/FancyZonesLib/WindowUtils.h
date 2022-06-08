@@ -19,6 +19,7 @@ namespace FancyZonesWindowUtils
     bool IsCandidateForZoning(HWND window);
     bool IsProcessOfWindowElevated(HWND window); // If HWND is already dead, we assume it wasn't elevated
     bool IsExcludedByUser(const std::wstring& processPath) noexcept;
+    bool IsExcludedByUserHwnd(HWND window) noexcept;
     bool IsExcludedByDefault(const std::wstring& processPath) noexcept;
 
     void SwitchToWindow(HWND window) noexcept;
