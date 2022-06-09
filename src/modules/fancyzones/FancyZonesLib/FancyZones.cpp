@@ -1063,12 +1063,7 @@ void FancyZones::UpdateWindowsPositions(bool suppressMove) noexcept
                     center.x = (long)(0.5 * windowRect.left + 0.5 * windowRect.right);
                     center.y = (long)(0.5 * windowRect.top + 0.5 * windowRect.bottom);
 
-                    const auto zoneSet = workArea->ZoneSet();
-                    if (zoneSet)
-                    {
-                        auto zones = zoneSet->ZonesFromPoint(center);
-                        MoveWindowIntoZone(window, workArea, zones);
-                    }
+                    MoveWindowIntoZoneByPoint(window, center);
                 }
             }
         }
