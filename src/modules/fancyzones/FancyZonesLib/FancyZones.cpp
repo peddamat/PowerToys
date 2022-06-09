@@ -52,6 +52,7 @@ namespace NonLocalizable
 {
     const wchar_t ToolWindowClassName[] = L"SuperFancyZones";
     const wchar_t FZEditorExecutablePath[] = L"modules\\FancyZones\\PowerToys.FancyZonesEditor.exe";
+    const wchar_t FZHookDllPath[] = L"FancyZonesHook.dll";
 }
 
 struct FancyZones : public winrt::implements<FancyZones, IFancyZones, IFancyZonesCallback>, public SettingsObserver
@@ -185,7 +186,6 @@ private:
 
     const HINSTANCE m_hinstance{};
 
-    std::vector<HHOOK> m_hooks;
     HWND m_window{};
     WindowMoveHandler m_windowMoveHandler;
     MonitorWorkAreaHandler m_workAreaHandler;
@@ -214,9 +214,12 @@ private:
         PrevTab = 3,
     };
 
-	using result_t = std::vector<HWND>;
-	result_t hookedWindows;
-
+	//using result_t = std::vector<HWND>;
+	//result_t hookedWindows;
+    std::vector<HHOOK> m_hooks;
+    // Used to add FancyZonesHook to new and existing windows
+    wil::unique_hmodule m_hookDll{ LoadLibrary(NonLocalizable::FZHookDllPath) };
+    bool HookWindows(std::vector<HWND> windows) noexcept;
 };
 
 std::function<void()> FancyZones::disableModuleCallback = {};
@@ -279,6 +282,9 @@ FancyZones::Run() noexcept
 
 BOOL FancyZones::HookTopLevelWindows() noexcept
 {
+	using result_t = std::vector<HWND>;
+	result_t hookableWindows;
+
     auto enumWindows = [](HWND hwnd, LPARAM param) -> BOOL {
 
 		if (!FancyZonesWindowUtils::IsCandidateForZoning(hwnd))
@@ -292,34 +298,9 @@ BOOL FancyZones::HookTopLevelWindows() noexcept
         return TRUE;
     };
 
-    EnumWindows(enumWindows, reinterpret_cast<LPARAM>(&hookedWindows));
+    EnumWindows(enumWindows, reinterpret_cast<LPARAM>(&hookableWindows));
 
-	auto dll = LoadLibrary(L"FancyZonesHook.dll");
-
-    if (dll == NULL)
-    {
-        return false;
-    }
-
-	// Get the address of the hook function
-	auto hookAddress = (HOOKPROC)GetProcAddress(dll, "getMsgProc");
-
-    for (HWND window : hookedWindows)
-    {
-		DWORD procID;
-		auto threadID = GetWindowThreadProcessId(window, &procID);
-
-		// Set the hook
-		auto hookHandle = SetWindowsHookEx(WH_GETMESSAGE, hookAddress, dll, threadID);
-		m_hooks.push_back(hookHandle);
-
-		Logger::info("Hooking: {}\n", (void*)window);
-
-		PostMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0);
-    }
-
-    // We only loaded the dll to get the hook function's address...
-    FreeLibrary(dll);
+    HookWindows(hookableWindows);
 
     return true;
 }
@@ -334,14 +315,6 @@ FancyZones::Destroy() noexcept
     {
         DestroyWindow(m_window);
         m_window = nullptr;
-    }
-
-    for (auto window : hookedWindows)
-    {
-        if (!SendMessage(window, WM_PRIV_UNHOOK_WINDOW, (WPARAM)window, 0))
-        {
-			Logger::info(L"Error unloading: %#010X\n", (void *)window);
-        }
     }
 
     for (HHOOK hook : m_hooks)
@@ -448,6 +421,34 @@ bool FancyZones::MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primar
     return false;
 }
 
+bool FancyZones::HookWindows(std::vector<HWND> windows) noexcept
+{
+	// Get the address of the hook function
+	auto hookAddress = (HOOKPROC)GetProcAddress(m_hookDll.get(), "getMsgProc");
+
+    for (HWND window : windows)
+    {
+        // Now get it's process and thread ID
+        DWORD procID;
+        auto threadID = GetWindowThreadProcessId(window, &procID);
+
+        // Set the hook
+        auto hookHandle = SetWindowsHookEx(WH_GETMESSAGE, hookAddress, m_hookDll.get(), threadID);
+
+        if (hookHandle != NULL)
+        {
+            Logger::info("Adding hook to window: {}\n", (void*)window);
+
+            // Tell the window to hook its window procedure
+            PostMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0);
+
+            m_hooks.emplace_back(hookHandle);
+        }
+    }
+
+    return true;
+}
+
 void FancyZones::WindowCreated(HWND window) noexcept
 {
     const bool moveToAppLastZone = FancyZonesSettings::settings().appLastZone_moveWindows;
@@ -462,24 +463,8 @@ void FancyZones::WindowCreated(HWND window) noexcept
     // Add the Fancy Zones hook
     if (FancyZonesWindowUtils::IsCandidateForZoning(window))
     {
-        auto dll = LoadLibrary(L"..\\..\\FancyZonesHook.dll");
-
-        // Get the address of the hook function
-        auto hookAddress = (HOOKPROC)GetProcAddress(dll, "getMsgProc");
-
-        // Now get it's process and thread ID
-        DWORD procID;
-        auto threadID = GetWindowThreadProcessId(window, &procID);
-
-        // Set the hook
-        auto result = SetWindowsHookEx(WH_GETMESSAGE, hookAddress, dll, threadID);
-        m_hooks.push_back(result);
-
-        Logger::info("Hooking: {}\n", (void*)window);
-
-        PostMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0);
+        HookWindows({ window });
     }
-
 
     if (!FancyZonesWindowProcessing::IsProcessable(window))
     {
