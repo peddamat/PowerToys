@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "FancyZonesWindowProperties.h"
 
+#include <common/display/dpi_aware.h>
 #include <FancyZonesLib/ZoneIndexSetBitmask.h>
 
 #include <common/logger/logger.h>
@@ -26,8 +27,8 @@ BOOL FancyZonesWindowProperties::StampZoneDimensions(HWND window, const RECT& re
 	float originX = static_cast<float>(rect.left);
 	float originY = static_cast<float>(rect.top);
 
-	//DPIAware::InverseConvert(MonitorFromWindow(window, MONITOR_DEFAULTTONULL), width, height);
-	//DPIAware::InverseConvert(MonitorFromWindow(window, MONITOR_DEFAULTTONULL), originX, originY);
+	DPIAware::InverseConvert(MonitorFromWindow(window, MONITOR_DEFAULTTONULL), width, height);
+	DPIAware::InverseConvert(MonitorFromWindow(window, MONITOR_DEFAULTTONULL), originX, originY);
 
 	std::array<int, 2> windowSizeData = { static_cast<int>(width), static_cast<int>(height) };
 	std::array<int, 2> windowOriginData = { static_cast<int>(originX), static_cast<int>(originY) };
