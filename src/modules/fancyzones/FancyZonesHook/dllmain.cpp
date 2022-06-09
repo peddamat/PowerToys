@@ -10,7 +10,7 @@
 #include <commctrl.h>
 #pragma comment(lib, "comctl32.lib")
 
-#include <FancyZonesHook/FancyZonesHookEventIDs.h>
+#include "FancyZonesHookEventIDs.h"
 
 const wchar_t PropertyZoneSizeID[] = L"FancyZones_ZoneSize";
 const wchar_t PropertyZoneOriginID[] = L"FancyZones_ZoneOrigin";

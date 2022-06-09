@@ -294,7 +294,12 @@ BOOL FancyZones::HookTopLevelWindows() noexcept
 
     EnumWindows(enumWindows, reinterpret_cast<LPARAM>(&hookedWindows));
 
-	auto dll = LoadLibrary(L"..\\..\\FancyZonesHook.dll");
+	auto dll = LoadLibrary(L"FancyZonesHook.dll");
+
+    if (dll == NULL)
+    {
+        return false;
+    }
 
 	// Get the address of the hook function
 	auto hookAddress = (HOOKPROC)GetProcAddress(dll, "getMsgProc");
