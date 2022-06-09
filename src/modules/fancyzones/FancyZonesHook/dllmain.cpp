@@ -88,17 +88,34 @@ LRESULT CALLBACK hookWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lP
 	  */
 	case WM_WINDOWPOSCHANGING:
     {
+
 		// The system sets the WS_MAXIMIZE style prior to posting a 
 		// WM_WINDOWPOSCHANGING message, which is convenient for us...
 		if (WS_MAXIMIZE & GetWindowLong(window, GWL_STYLE))
 		{
-			POINT zoneSize;
-			POINT zoneOrigin;
+			RECT c;
+			GetClientRect(window, &c);
 
+			MONITORINFO mi;
+			mi.cbSize = sizeof(mi);
+
+			// If the window is actually maximized, as in, filling the entire monitor, let the default
+			// window handler handle the event.  This prevents weird quirks, like WM_DLGFRAME being left
+			// on a window after it has been restored.
+            if (GetMonitorInfo(MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST), &mi))
+            {
+				if (((mi.rcWork.right - mi.rcWork.left) == (c.right - c.left) &&
+					((mi.rcWork.bottom - mi.rcWork.top) == (c.bottom - c.top))))
+				{
+					break;
+				}
+            }
+
+			POINT zoneSize, zoneOrigin;
 			if (GetStampedZoneProperties(window, zoneSize, zoneOrigin))
 			{
-                RECT c;
-                GetWindowRect(window, &c);
+                RECT w;
+                GetWindowRect(window, &w);
 
 				auto windowpos = reinterpret_cast<WINDOWPOS*>(lParam);
 
@@ -108,13 +125,17 @@ LRESULT CALLBACK hookWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lP
 				windowpos->cx = zoneSize.x;
 				windowpos->cy = zoneSize.y;
 
-				// Unset the WS_MAXIMIZE style, unless the window was already filling the zone
-                if (!((zoneOrigin.x == c.left) &&
-                      (zoneOrigin.y == c.top) &&
-                      (zoneSize.x == (c.right - c.left)) &&
-                      (zoneSize.y == (c.bottom - c.top))))
+
+				// If the window is not already filling the zone...
+                if (!((zoneOrigin.x == w.left) &&
+                      (zoneOrigin.y == w.top) &&
+                      (zoneSize.x == (w.right - w.left)) &&
+                      (zoneSize.y == (w.bottom - w.top))))
                 {
+					// ... remove the WS_MAXIMIZE style
                     SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) & ~WS_MAXIMIZE);
+
+					windowpos->flags = SWP_FRAMECHANGED | SWP_SHOWWINDOW;
                 }
 				return 0;
 			}
