@@ -213,6 +213,10 @@ private:
         NextTab = 2,
         PrevTab = 3,
     };
+
+	using result_t = std::vector<HWND>;
+	result_t hookedWindows;
+
 };
 
 std::function<void()> FancyZones::disableModuleCallback = {};
@@ -272,8 +276,6 @@ FancyZones::Run() noexcept
     PostMessage(m_window, WM_PRIV_VD_INIT, 0, 0);
 }
 
-using result_t = std::vector<HWND>;
-result_t result;
 
 BOOL FancyZones::HookTopLevelWindows() noexcept
 {
@@ -290,21 +292,21 @@ BOOL FancyZones::HookTopLevelWindows() noexcept
         return TRUE;
     };
 
-    EnumWindows(enumWindows, reinterpret_cast<LPARAM>(&result));
+    EnumWindows(enumWindows, reinterpret_cast<LPARAM>(&hookedWindows));
 
 	auto dll = LoadLibrary(L"..\\..\\FancyZonesHook.dll");
 
 	// Get the address of the hook function
 	auto hookAddress = (HOOKPROC)GetProcAddress(dll, "getMsgProc");
 
-    for (HWND window : result)
+    for (HWND window : hookedWindows)
     {
 		DWORD procID;
 		auto threadID = GetWindowThreadProcessId(window, &procID);
 
 		// Set the hook
-		auto result = SetWindowsHookEx(WH_GETMESSAGE, hookAddress, dll, threadID);
-		m_hooks.push_back(result);
+		auto hookHandle = SetWindowsHookEx(WH_GETMESSAGE, hookAddress, dll, threadID);
+		m_hooks.push_back(hookHandle);
 
 		Logger::info("Hooking: {}\n", (void*)window);
 
@@ -329,9 +331,9 @@ FancyZones::Destroy() noexcept
         m_window = nullptr;
     }
 
-    for (auto window : result)
+    for (auto window : hookedWindows)
     {
-        if (!SendMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0))
+        if (!SendMessage(window, WM_PRIV_UNHOOK_WINDOW, (WPARAM)window, 0))
         {
 			Logger::info(L"Error unloading: %#010X\n", (void *)window);
         }
