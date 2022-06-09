@@ -7,7 +7,7 @@
 #include <commctrl.h>
 #pragma comment(lib, "comctl32.lib")
 
-#include <FancyZonesHookEventIDs.h>
+#include <FancyZonesHook/FancyZonesHookEventIDs.h>
 
 HMODULE m_moduleHandle = NULL;
 static DWORD dwTlsIndex;
@@ -30,23 +30,37 @@ void DeepCleanByThread();
 INT APIENTRY DllMain(HMODULE hDLL, DWORD Reason, LPVOID Reserved) {
 
 	switch (Reason) {
+
+	/**
+	  *	DLL_PROCESS_ATTACH is called, once, when the DLL is attached to the process.
+	  * Normally, this should be triggered by a SetWindowsHookEx() call in Fancy 
+	  * Zones; however, if Fancy Zones has previously crashed, the DLL may already
+	  * be attached to the process when SetWindowsHookEx() is called.
+	  */
 	case DLL_PROCESS_ATTACH:
 
-		// Allocate a Thread Local Storage (TLS) index, so each
-		// hooked thread can independently store its HWND handle.
-		if ((dwTlsIndex = TlsAlloc()) == TLS_OUT_OF_INDEXES)
-		{ 
-			return FALSE;
-		}
-
-		// Increment the DLL reference count so the DLL is not
-		// unloaded before we're able to clean-up
+		/* We need to increment the reference count so that the process can */
+		/* unhook any hooked subclasses before the DLL is unloaded.         */
         if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCTSTR)DllMain, &m_moduleHandle))
         {
             return FALSE;
         }
+
+		/* We allocate a Thread Local Storage (TLS) index, so each that each hooked */
+		/* GUI thread can store its HWND handle in an isolated, thread-safe manner. */
+		if ((dwTlsIndex = TlsAlloc()) == TLS_OUT_OF_INDEXES)
+		{ 
+			return FALSE;
+		}
 		break;
 
+	/**
+	  *	DLL_PROCESS_DETACH is triggered, once, per process under the following conditions:
+	  * - The process hosting the hooked window has terminated. 
+	  * - UnsetWindowsHookEx() has been called in Fancy Zones.
+	  * - FreeLibrary() has been called in Fancy Zones.
+	  * However, 
+	  */
 	case DLL_PROCESS_DETACH:
 
 		// To ensure 
