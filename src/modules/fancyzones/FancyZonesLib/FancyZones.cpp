@@ -167,7 +167,7 @@ private:
     
     std::pair<winrt::com_ptr<IWorkArea>, ZoneIndexSet> GetAppZoneHistoryInfo(HWND window, HMONITOR monitor, const std::unordered_map<HMONITOR, winrt::com_ptr<IWorkArea>>& workAreaMap) noexcept;
     void MoveWindowIntoZone(HWND window, winrt::com_ptr<IWorkArea> workArea, const ZoneIndexSet& zoneIndexSet) noexcept;
-    void MoveWindowIntoZoneByCursor(HWND window) noexcept;
+    void MoveWindowIntoZoneByPoint(HWND window, POINT pt) noexcept;
     bool MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primary) noexcept;
 
     void OnEditorExitEvent() noexcept;
@@ -395,18 +395,15 @@ void FancyZones::MoveWindowIntoZone(HWND window, winrt::com_ptr<IWorkArea> workA
     AppZoneHistory::instance().UpdateProcessIdToHandleMap(window, workArea->UniqueId());
 }
 
-void FancyZones::MoveWindowIntoZoneByCursor(HWND window) noexcept
+void FancyZones::MoveWindowIntoZoneByPoint(HWND window, POINT pt) noexcept
 {
-	POINT ptScreen;
-	GetPhysicalCursorPos(&ptScreen);
-
 	auto workArea = m_workAreaHandler.GetWorkAreaFromCursor(VirtualDesktop::instance().GetCurrentVirtualDesktopId());
     
     if (workArea)
     {
         Trace::FancyZones::SnapNewWindowIntoZone(workArea->ZoneSet());
     }
-    m_windowMoveHandler.MoveWindowIntoZoneByCursor(window, ptScreen, workArea);
+    m_windowMoveHandler.MoveWindowIntoZoneByPoint(window, pt, workArea);
     AppZoneHistory::instance().UpdateProcessIdToHandleMap(window, workArea->UniqueId());
 }
 
@@ -510,12 +507,13 @@ void FancyZones::WindowCreated(HWND window) noexcept
     bool windowHasMoved = false;
     if (moveToZoneUnderMouse)
     {
-        // First check if we currently have a sibling window of the same application active...
+        // First check if we currently have a sibling window of the same application active... 
+        // - GetForegroundWindow() won't work because the new window *is* the foreground window by this point
         auto windowUnderCursor = WindowFromPoint(cursorPosition);
         if (FancyZonesWindowUtils::ProcessForWindow(windowUnderCursor) == FancyZonesWindowUtils::ProcessForWindow(window))
         {
             // .. if so, move the sibling window over its sister
-            MoveWindowIntoZoneByCursor(window);
+            MoveWindowIntoZoneByPoint(window, cursorPosition);
             windowHasMoved = true;
         }
     }
@@ -529,7 +527,7 @@ void FancyZones::WindowCreated(HWND window) noexcept
 	// No application history exists, so place the window into the zone under the mouse cursor
     if (moveToZoneUnderMouse && !windowHasMoved)
     {
-        MoveWindowIntoZoneByCursor(window);
+        MoveWindowIntoZoneByPoint(window, cursorPosition);
     }
     // Open on active monitor if window wasn't zoned
     else if (openOnActiveMonitor && !windowHasMoved)
@@ -875,8 +873,7 @@ LRESULT FancyZones::WndProc(HWND window, UINT message, WPARAM wparam, LPARAM lpa
                         else
                         {
                             // ... otherwise, resize window to zone the mouse cursor is in
-                            auto zones = zoneSet->ZonesFromPoint(ptScreen);
-                            MoveWindowIntoZone(hwnd, workArea, zones);
+                            MoveWindowIntoZoneByPoint(hwnd, ptScreen);
                         }
                     }
                 }

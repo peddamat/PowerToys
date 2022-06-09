@@ -292,11 +292,11 @@ void WindowMoveHandler::MoveSizeEnd(HWND window, POINT const& ptScreen, const st
     }
 }
 
-void WindowMoveHandler::MoveWindowIntoZoneByCursor(HWND window, POINT const& ptScreen, winrt::com_ptr<IWorkArea> workArea) noexcept
+void WindowMoveHandler::MoveWindowIntoZoneByPoint(HWND window, POINT const& ptScreen, winrt::com_ptr<IWorkArea> workArea) noexcept
 {
     if (workArea)
     {
-        workArea->MoveWindowIntoZoneByCursor(window, ptScreen);
+        workArea->MoveWindowIntoZoneByPoint(window, ptScreen);
     }
 }
 
