@@ -421,11 +421,6 @@ void FancyZonesWindowUtils::RestoreWindowOrigin(HWND window) noexcept
         std::array<int, 2> windowOrigin;
         memcpy(windowOrigin.data(), &windowOriginData, sizeof windowOrigin);
 
-        float windowWidth = static_cast<float>(windowOrigin[0]), windowHeight = static_cast<float>(windowOrigin[1]);
-
-        // {width, height}
-        DPIAware::Convert(MonitorFromWindow(window, MONITOR_DEFAULTTONULL), windowWidth, windowHeight);
-
         RECT rect;
         if (GetWindowRect(window, &rect))
         {
