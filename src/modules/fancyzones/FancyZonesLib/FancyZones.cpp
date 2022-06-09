@@ -299,7 +299,6 @@ BOOL FancyZones::HookTopLevelWindows() noexcept
 
     for (HWND window : result)
     {
-		// Now get it's process and thread ID
 		DWORD procID;
 		auto threadID = GetWindowThreadProcessId(window, &procID);
 
@@ -309,9 +308,11 @@ BOOL FancyZones::HookTopLevelWindows() noexcept
 
 		Logger::info("Hooking: {}\n", (void*)window);
 
-		//PostMessage(HWND_BROADCAST, WM_USER + 900, (WPARAM)targetWnd, 0xFF);
 		PostMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0);
     }
+
+    // We only loaded the dll to get the hook function's address...
+    FreeLibrary(dll);
 
     return true;
 }

@@ -4,70 +4,43 @@
 #include <array>
 #include <vector>
 
+#include <map>
+#include <mutex>
+
 #include <commctrl.h>
 #pragma comment(lib, "comctl32.lib")
 
 #include <FancyZonesHook/FancyZonesHookEventIDs.h>
 
-HMODULE m_moduleHandle = NULL;
-static DWORD dwTlsIndex;
-
 const wchar_t PropertyZoneSizeID[] = L"FancyZones_ZoneSize";
 const wchar_t PropertyZoneOriginID[] = L"FancyZones_ZoneOrigin";
 
+std::map<HWND, DWORD> hookedWindows;
+std::mutex mutex;
+
 bool AddHook(HWND hwnd);
 bool RemoveHook(HWND hwnd);
+void CleanupHookedWindows();
+BOOL GetStampedZoneProperties(HWND window, POINT& zoneSize, POINT& zoneOrigin) noexcept;
 LRESULT CALLBACK hookWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
-BOOL GetStampedZoneProperties(HWND window, POINT& zoneSize, POINT& zoneOrigin) noexcept;
-
-void DeepClean();
-void DeepCleanByThread();
 
 /******************************************************************************
 * DLL Entrypoint
 ******************************************************************************/
 INT APIENTRY DllMain(HMODULE hDLL, DWORD Reason, LPVOID Reserved) {
 
-	switch (Reason) {
+	switch (Reason) 
+	{
 
-	/**
-	  *	DLL_PROCESS_ATTACH is called, once, when the DLL is attached to the process.
-	  * Normally, this should be triggered by a SetWindowsHookEx() call in Fancy 
-	  * Zones; however, if Fancy Zones has previously crashed, the DLL may already
-	  * be attached to the process when SetWindowsHookEx() is called.
-	  */
 	case DLL_PROCESS_ATTACH:
-
-		/* We need to increment the reference count so that the process can */
-		/* unhook any hooked subclasses before the DLL is unloaded.         */
-        if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCTSTR)DllMain, &m_moduleHandle))
-        {
-            return FALSE;
-        }
-
-		/* We allocate a Thread Local Storage (TLS) index, so each that each hooked */
-		/* GUI thread can store its HWND handle in an isolated, thread-safe manner. */
-		if ((dwTlsIndex = TlsAlloc()) == TLS_OUT_OF_INDEXES)
-		{ 
-			return FALSE;
-		}
+		// Unused
 		break;
 
-	/**
-	  *	DLL_PROCESS_DETACH is triggered, once, per process under the following conditions:
-	  * - The process hosting the hooked window has terminated. 
-	  * - UnsetWindowsHookEx() has been called in Fancy Zones.
-	  * - FreeLibrary() has been called in Fancy Zones.
-	  * However, 
-	  */
+	// Generated after Fancy Zones has called UnsetWindowsHookEx() on the last
+	// message listener hook on the process this DLL was injected into
 	case DLL_PROCESS_DETACH:
-
-		// To ensure 
-		DeepClean();
-		TlsFree(dwTlsIndex);
-        FreeLibraryAndExitThread(hDLL, 1); 
-		return false;
+		CleanupHookedWindows();
 		break;
 
 	case DLL_THREAD_ATTACH:
@@ -82,51 +55,27 @@ INT APIENTRY DllMain(HMODULE hDLL, DWORD Reason, LPVOID Reserved) {
 	return TRUE;
 }
 
-BOOL IsOurWindow(DWORD windowPid)
+void CleanupHookedWindows()
 {
-	return windowPid == GetCurrentProcessId();
+	std::map<HWND, DWORD>::iterator it;
+	for (it=hookedWindows.begin(); it!=hookedWindows.end();)
+	{
+        SendMessage(it->first, WM_PRIV_UNHOOK_WINDOW, (WPARAM)it->first, 0);
+
+		it = hookedWindows.begin();
+	}
 }
 
-void DeepCleanByThread()
-{
-	// TODO: Fix this
-	//PostThreadMessage(GetCurrentThreadId(), WM_PRIV_HOOK_WINDOW, (WPARAM)GetCurrentThreadId(), 0);
-}
-
-void DeepClean()
-{
-    using result_t = std::vector<HWND>;
-    result_t result;
-
-    auto enumWindows = [](HWND hwnd, LPARAM param) -> BOOL {
-		DWORD pid;
-		DWORD tid = GetWindowThreadProcessId(hwnd, &pid);
-
-		if (IsOurWindow(pid))
-		{
-            result_t& result = *reinterpret_cast<result_t*>(param);
-            result.push_back(hwnd);
-		}
-
-        return TRUE;
-    };
-
-    EnumWindows(enumWindows, reinterpret_cast<LPARAM>(&result));
-
-    for (HWND window: result)
-    {
-        PostMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0);
-    }
-}
 
 /******************************************************************************
 * FancyZones Window Process Subclass
 ******************************************************************************/
 LRESULT CALLBACK hookWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
-	// Only process windows that are in a zone
-	if (!GetPropW(window, PropertyZoneSizeID))
-		goto end;
+	// If the window isn't stamped with a zone, or the Shift 
+	// key is being held, pretend that we're not even here...
+    if (!GetPropW(window, PropertyZoneSizeID) || (GetAsyncKeyState(VK_SHIFT) & 0x8000))
+        goto end;
 
 
 	switch (message)
@@ -139,10 +88,6 @@ LRESULT CALLBACK hookWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lP
 	  */
 	case WM_WINDOWPOSCHANGING:
     {
-		// Skip if Shift is being pressed...
-        if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
-            break;
-
 		// The system sets the WS_MAXIMIZE style prior to posting a 
 		// WM_WINDOWPOSCHANGING message, which is convenient for us...
 		if (WS_MAXIMIZE & GetWindowLong(window, GWL_STYLE))
@@ -183,7 +128,8 @@ LRESULT CALLBACK hookWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lP
 	  */
 	case WM_DESTROY:
     {
-        RemoveHook(NULL);
+        RemoveHook(window);
+		return DefSubclassProc(window, message, wParam, lParam);
     }
 	break;
 
@@ -191,12 +137,12 @@ LRESULT CALLBACK hookWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lP
     {
         if (message == WM_PRIV_UNHOOK_WINDOW)
         {
-            RemoveHook(NULL);
+            RemoveHook(window);
             return 1;
         }
-		else if (message == WM_PRIV_DEEP_CLEAN)
+		else if (message == WM_PRIV_UNHOOK_ALL_WINDOWS)
         {
-            DeepClean();
+            CleanupHookedWindows();
             return 1;
         }
     }
@@ -213,59 +159,66 @@ LRESULT CALLBACK hookWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lP
 ******************************************************************************/
 bool AddHook(HWND hwnd)
 {
-	if (!SetWindowSubclass(hwnd, &hookWndProc, 1, 0)) {
-		return FALSE;
+	std::lock_guard<std::mutex> guard(mutex);
+
+	// If the window isn't already subclassed...
+	if (!GetWindowSubclass(hwnd, &hookWndProc, 1, 0))
+	{
+		if (!SetWindowSubclass(hwnd, &hookWndProc, 1, 0)) 
+		{
+			return FALSE;
+		}
 	}
 
-	// Save handle to subclassed window
-	if (!TlsSetValue(dwTlsIndex, hwnd))
-	{
-		return FALSE;
-	}
+	hookedWindows[hwnd] = GetCurrentThreadId();
 
 	return TRUE;
 }
 	
-
-// By default we retrieve the stored window handle
-bool RemoveHook(HWND hwnd = (HWND) TlsGetValue(dwTlsIndex))
+bool RemoveHook(HWND hwnd)
 {
 	if (hwnd == NULL)
+		return false;
+
+	std::lock_guard<std::mutex> guard(mutex);
+
+	// Make sure the window is actually subclassed
+	if (GetWindowSubclass(hwnd, &hookWndProc, 1, 0))
 	{
+		if (!RemoveWindowSubclass(hwnd, &hookWndProc, 1)) {
+			return FALSE;
+		}
+
+		hookedWindows.erase(hwnd);
+
 		return TRUE;
 	}
-
-	if (!RemoveWindowSubclass(hwnd, &hookWndProc, 1)) {
-		return FALSE;
+	else
+	{
+		return false;
 	}
-
-	TlsSetValue(dwTlsIndex, 0);
-
-	return TRUE;
 }
-
 
 extern "C" __declspec(dllexport) 
 LRESULT CALLBACK getMsgProc(int code, WPARAM wParam, LPARAM lParam) {
-	auto msg = reinterpret_cast<MSG*>(lParam);
-
-	if (code < 0) // Do not process
+	if (code < 0) 
 		goto end;
 
-	// Only process the message after it's been removed from the message queue, 
-	// otherwise we may accidentally process it more than once.
-	if (wParam != PM_REMOVE)
-		goto end; 
-
-	if (msg->message == WM_PRIV_HOOK_WINDOW)
+	// We only process messages that have been removed from the 
+	// message queue to guarantee that we only process them once
+	if (wParam == PM_REMOVE)
 	{
-		auto window = reinterpret_cast<HWND>(msg->wParam);
-		AddHook(window);
-	}
-	else if (msg->message == WM_PRIV_UNHOOK_WINDOW)
-	{
-		auto window = reinterpret_cast<HWND>(msg->wParam);
-		RemoveHook(NULL);
+		auto msg = reinterpret_cast<MSG*>(lParam);
+		if (msg->message == WM_PRIV_HOOK_WINDOW)
+		{
+			auto hwnd = reinterpret_cast<HWND>(msg->wParam);
+			AddHook(hwnd);
+		}
+		else if (msg->message == WM_PRIV_UNHOOK_ALL_WINDOWS)
+		{
+			auto hwnd = reinterpret_cast<HWND>(msg->wParam);
+			RemoveHook(hwnd);
+		}
 	}
 
 	end:
