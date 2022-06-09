@@ -40,7 +40,7 @@
            -->
     <?define ShortcutGuideSvgsFiles=0.svg;1.svg;2.svg;3.svg;4.svg;5.svg;6.svg;7.svg;8.svg;9.svg;no_active_window.svg;overlay.svg;overlay_portrait.svg?>
 
-    <?define FancyZonesFiles=PowerToys.FancyZonesModuleInterface.dll;PowerToys.FancyZonesEditor.dll;PowerToys.FancyZonesEditor.runtimeconfig.json;PowerToys.FancyZonesEditor.deps.json;PowerToys.FancyZonesEditor.exe;PowerToys.FancyZones.exe;ControlzEx.dll;Microsoft.Xaml.Behaviors.dll;ModernWpf.dll;ModernWpf.Controls.dll;System.Text.Json.dll;PowerToys.Interop.dll;PowerToys.ManagedCommon.dll;PowerToys.Common.UI.dll;PowerToys.ManagedTelemetry.dll;System.IO.Abstractions.dll;Microsoft.Windows.SDK.NET.dll;WinRT.Runtime.dll;Ijwhost.dll?>
+    <?define FancyZonesFiles=PowerToys.FancyZonesModuleInterface.dll;PowerToys.FancyZonesEditor.dll;PowerToys.FancyZonesEditor.runtimeconfig.json;PowerToys.FancyZonesEditor.deps.json;PowerToys.FancyZonesEditor.exe;PowerToys.FancyZones.exe;FancyZonesHook.dll;ControlzEx.dll;Microsoft.Xaml.Behaviors.dll;ModernWpf.dll;ModernWpf.Controls.dll;System.Text.Json.dll;PowerToys.Interop.dll;PowerToys.ManagedCommon.dll;PowerToys.Common.UI.dll;PowerToys.ManagedTelemetry.dll;System.IO.Abstractions.dll;Microsoft.Windows.SDK.NET.dll;WinRT.Runtime.dll;Ijwhost.dll?>
     
     <?define ImageResizerFiles=PowerToys.ImageResizer.exe;PowerToys.ImageResizerExt.dll;PowerToys.ImageResizer.dll;PowerToys.ImageResizer.deps.json;PowerToys.ImageResizer.runtimeconfig.json;PowerToys.ManagedCommon.dll;PowerToys.ManagedTelemetry.dll;PowerToys.Common.UI.dll;ControlzEx.dll;ModernWpf.Controls.dll;ModernWpf.dll;System.Text.Json.dll;Microsoft.Xaml.Behaviors.dll;PowerToys.Interop.dll;System.IO.Abstractions.dll;WinRT.Runtime.dll;Microsoft.Windows.SDK.NET.dll;Ijwhost.dll ?>
 
