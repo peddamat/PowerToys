@@ -214,9 +214,7 @@ private:
         PrevTab = 3,
     };
 
-	//using result_t = std::vector<HWND>;
-	//result_t hookedWindows;
-    std::vector<HHOOK> m_hooks;
+    std::map<HWND, HHOOK> m_hooks;
     // Used to add FancyZonesHook to new and existing windows
     wil::unique_hmodule m_hookDll{ LoadLibrary(NonLocalizable::FZHookDllPath) };
     bool HookWindows(std::vector<HWND> windows) noexcept;
@@ -309,17 +307,28 @@ BOOL FancyZones::HookTopLevelWindows() noexcept
 IFACEMETHODIMP_(void)
 FancyZones::Destroy() noexcept
 {
+	std::map<HWND, HHOOK>::iterator it;
+	for (it=m_hooks.begin(); it!=m_hooks.end(); ++it)
+	{
+        // Make sure the window handle still exists, since we're not tracking WM_DESTROY'd windows
+        if (IsWindow(it->first))
+        {
+            Logger::info("Removing hook from: {}\n", (void *)it->first);
+
+            // Tell window to remove subclass
+            SendMessage(it->first, WM_PRIV_UNHOOK_WINDOW, (WPARAM)it->first, 0);
+
+            // Remove message listener hook
+            UnhookWindowsHookEx(it->second);
+        }
+	}
+
     m_workAreaHandler.Clear();
     BufferedPaintUnInit();
     if (m_window)
     {
         DestroyWindow(m_window);
         m_window = nullptr;
-    }
-
-    for (HHOOK hook : m_hooks)
-    {
-        UnhookWindowsHookEx(hook);
     }
 }
 
@@ -442,7 +451,7 @@ bool FancyZones::HookWindows(std::vector<HWND> windows) noexcept
             // Tell the window to hook its window procedure
             PostMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0);
 
-            m_hooks.emplace_back(hookHandle);
+            m_hooks[window] = hookHandle;
         }
     }
 
