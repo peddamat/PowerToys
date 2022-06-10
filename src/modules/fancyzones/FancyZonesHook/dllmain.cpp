@@ -60,7 +60,14 @@ void CleanupHookedWindows()
 	std::map<HWND, DWORD>::iterator it;
 	for (it=hookedWindows.begin(); it!=hookedWindows.end();)
 	{
-        SendMessage(it->first, WM_PRIV_UNHOOK_WINDOW, (WPARAM)it->first, 0);
+        if (IsWindow(it->first))
+        {
+            SendMessage(it->first, WM_PRIV_UNHOOK_WINDOW, (WPARAM)it->first, 0);
+        }
+        else
+        {
+			hookedWindows.erase(it->first);
+        }
 
 		it = hookedWindows.begin();
 	}
@@ -207,6 +214,7 @@ bool RemoveHook(HWND hwnd)
 	if (GetWindowSubclass(hwnd, &hookWndProc, 1, 0))
 	{
 		if (!RemoveWindowSubclass(hwnd, &hookWndProc, 1)) {
+			hookedWindows.erase(hwnd);
 			return FALSE;
 		}
 

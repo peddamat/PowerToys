@@ -319,7 +319,11 @@ FancyZones::Destroy() noexcept
             SendMessage(it->first, WM_PRIV_UNHOOK_WINDOW, (WPARAM)it->first, 0);
 
             // Remove message listener hook
-            UnhookWindowsHookEx(it->second);
+            if (it->second)
+            {
+                UnhookWindowsHookEx(it->second);
+                it->second = NULL;
+            }
         }
 	}
 
