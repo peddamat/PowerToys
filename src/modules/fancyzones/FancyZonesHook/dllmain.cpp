@@ -55,6 +55,53 @@ INT APIENTRY DllMain(HMODULE hDLL, DWORD Reason, LPVOID Reserved) {
 	return TRUE;
 }
 
+
+/******************************************************************************
+* Window Process Hook Functions
+******************************************************************************/
+bool AddHook(HWND hwnd)
+{
+	std::lock_guard<std::mutex> guard(mutex);
+
+	// If the window isn't already subclassed...
+	if (!GetWindowSubclass(hwnd, &hookWndProc, 1, 0))
+	{
+		if (!SetWindowSubclass(hwnd, &hookWndProc, 1, 0)) 
+		{
+			return FALSE;
+		}
+	}
+
+	hookedWindows[hwnd] = GetCurrentThreadId();
+
+	return TRUE;
+}
+	
+bool RemoveHook(HWND hwnd)
+{
+	if (hwnd == NULL)
+		return false;
+
+	std::lock_guard<std::mutex> guard(mutex);
+
+	// Make sure the window is actually subclassed
+	if (GetWindowSubclass(hwnd, &hookWndProc, 1, 0))
+	{
+		if (!RemoveWindowSubclass(hwnd, &hookWndProc, 1)) {
+			hookedWindows.erase(hwnd);
+			return FALSE;
+		}
+
+		hookedWindows.erase(hwnd);
+
+		return TRUE;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 void CleanupHookedWindows()
 {
 	std::map<HWND, DWORD>::iterator it;
@@ -71,6 +118,36 @@ void CleanupHookedWindows()
 
 		it = hookedWindows.begin();
 	}
+}
+
+
+/******************************************************************************
+* SetWindowsHookEx Callback
+******************************************************************************/
+extern "C" __declspec(dllexport) 
+LRESULT CALLBACK getMsgProc(int code, WPARAM wParam, LPARAM lParam) {
+	if (code < 0) 
+		goto end;
+
+	// We only process messages that have been removed from the 
+	// message queue to guarantee that we only process them once
+	if (wParam == PM_REMOVE)
+	{
+		auto msg = reinterpret_cast<MSG*>(lParam);
+		if (msg->message == WM_PRIV_HOOK_WINDOW)
+		{
+			auto hwnd = reinterpret_cast<HWND>(msg->wParam);
+			AddHook(hwnd);
+		}
+		else if (msg->message == WM_PRIV_UNHOOK_ALL_WINDOWS)
+		{
+			auto hwnd = reinterpret_cast<HWND>(msg->wParam);
+			RemoveHook(hwnd);
+		}
+	}
+
+	end:
+	return(CallNextHookEx(NULL, code, wParam, lParam));
 }
 
 
@@ -179,79 +256,6 @@ LRESULT CALLBACK hookWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lP
 
 	end:
 	return DefSubclassProc(window, message, wParam, lParam);
-}
-
-
-/******************************************************************************
-* Window Process Hook Functions
-******************************************************************************/
-bool AddHook(HWND hwnd)
-{
-	std::lock_guard<std::mutex> guard(mutex);
-
-	// If the window isn't already subclassed...
-	if (!GetWindowSubclass(hwnd, &hookWndProc, 1, 0))
-	{
-		if (!SetWindowSubclass(hwnd, &hookWndProc, 1, 0)) 
-		{
-			return FALSE;
-		}
-	}
-
-	hookedWindows[hwnd] = GetCurrentThreadId();
-
-	return TRUE;
-}
-	
-bool RemoveHook(HWND hwnd)
-{
-	if (hwnd == NULL)
-		return false;
-
-	std::lock_guard<std::mutex> guard(mutex);
-
-	// Make sure the window is actually subclassed
-	if (GetWindowSubclass(hwnd, &hookWndProc, 1, 0))
-	{
-		if (!RemoveWindowSubclass(hwnd, &hookWndProc, 1)) {
-			hookedWindows.erase(hwnd);
-			return FALSE;
-		}
-
-		hookedWindows.erase(hwnd);
-
-		return TRUE;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-extern "C" __declspec(dllexport) 
-LRESULT CALLBACK getMsgProc(int code, WPARAM wParam, LPARAM lParam) {
-	if (code < 0) 
-		goto end;
-
-	// We only process messages that have been removed from the 
-	// message queue to guarantee that we only process them once
-	if (wParam == PM_REMOVE)
-	{
-		auto msg = reinterpret_cast<MSG*>(lParam);
-		if (msg->message == WM_PRIV_HOOK_WINDOW)
-		{
-			auto hwnd = reinterpret_cast<HWND>(msg->wParam);
-			AddHook(hwnd);
-		}
-		else if (msg->message == WM_PRIV_UNHOOK_ALL_WINDOWS)
-		{
-			auto hwnd = reinterpret_cast<HWND>(msg->wParam);
-			RemoveHook(hwnd);
-		}
-	}
-
-	end:
-	return(CallNextHookEx(NULL, code, wParam, lParam));
 }
 
 
