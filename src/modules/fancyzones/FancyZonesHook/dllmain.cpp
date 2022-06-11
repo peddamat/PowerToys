@@ -231,7 +231,7 @@ LRESULT CALLBACK hookWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lP
 	  *	WM_DESTROY events are generated when the user closes an application
 	  * window.  If this happens, we need to...
 	  */
-	case WM_DESTROY:
+	case WM_NCDESTROY:
     {
         RemoveHook(window);
 		return DefSubclassProc(window, message, wParam, lParam);
