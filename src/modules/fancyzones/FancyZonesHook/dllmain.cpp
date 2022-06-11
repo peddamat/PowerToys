@@ -230,7 +230,7 @@ LRESULT CALLBACK hookWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lP
                 auto r3 = rgrcs[2];
                 if (r2.top == r3.top)
                 {
-                    return 0 | WVR_REDRAW;
+                    return 0 | WVR_ALIGNTOP | WVR_REDRAW;
                 }
             }
         }
