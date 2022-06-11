@@ -271,7 +271,18 @@ bool FancyZonesWindowUtils::IsExcludedByUserHwnd(HWND window) noexcept
 
 bool FancyZonesWindowUtils::IsExcludedByUser(const std::wstring& processPath) noexcept
 {
-    return (find_app_name_in_path(processPath, FancyZonesSettings::settings().excludedAppsArray));
+	// Exclude the following apps until we can debug them
+	auto excludes = FancyZonesSettings::settings().excludedAppsArray;
+	excludes.emplace_back(L"EXPLORER.EXE");
+	excludes.emplace_back(L"APPLICATIONFRAMEHOST.EXE");
+
+    auto result = (find_app_name_in_path(processPath, excludes));
+
+    // Clean-up
+    excludes.pop_back();
+    excludes.pop_back();
+
+    return result;
 }
 
 bool FancyZonesWindowUtils::IsExcludedByDefault(const std::wstring& processPath) noexcept
