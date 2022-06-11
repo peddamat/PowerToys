@@ -215,6 +215,31 @@ LRESULT CALLBACK hookWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lP
     }
 	break;
 
+	case WM_NCCALCSIZE:
+    {
+        if (wParam)
+        {
+            if (IsZoomed(window))
+            {
+                auto ncParams = reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam);
+                auto rgrcs = reinterpret_cast<RECT*>(ncParams->rgrc);
+				// I have no clue why this works, but it prevents Chrome and Brave's 
+				// titlebars from quirking, while also allowing GitKraken's titlebar
+				// to not disappear...
+                auto r2 = rgrcs[1];
+                auto r3 = rgrcs[2];
+                if (r2.top == r3.top)
+                {
+                    return 0 | WVR_REDRAW;
+                }
+            }
+        }
+        else
+        {
+            auto b = reinterpret_cast<RECT*>(lParam);
+        }
+    }
+	break;
 	/**
 	  *	WM_DESTROY events are generated when the user closes an application
 	  * window.  If this happens, we need to...
