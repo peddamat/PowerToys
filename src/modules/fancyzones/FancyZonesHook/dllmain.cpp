@@ -15,11 +15,13 @@
 const wchar_t PropertyZoneSizeID[] = L"FancyZones_ZoneSize";
 const wchar_t PropertyZoneOriginID[] = L"FancyZones_ZoneOrigin";
 
+// Each process the DLL is attached to keeps track of which 
+// windows have been hooked by it.  Important for clean-up.
+std::mutex hookedWindowMutex;
 std::map<HWND, DWORD> hookedWindows;
-std::mutex mutex;
 
 bool AddHook(HWND hwnd);
-bool RemoveHook(HWND hwnd);
+void RemoveHook(HWND hwnd);
 void CleanupHookedWindows();
 BOOL GetStampedZoneProperties(HWND window, POINT& zoneSize, POINT& zoneOrigin) noexcept;
 LRESULT CALLBACK hookWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
@@ -61,15 +63,12 @@ INT APIENTRY DllMain(HMODULE hDLL, DWORD Reason, LPVOID Reserved) {
 ******************************************************************************/
 bool AddHook(HWND hwnd)
 {
-	std::lock_guard<std::mutex> guard(mutex);
+	std::lock_guard<std::mutex> guard(hookedWindowMutex);
 
-	// If the window isn't already subclassed...
-	if (!GetWindowSubclass(hwnd, &hookWndProc, 1, 0))
+	// It's fine if this is called on an already subclassed window
+	if (!SetWindowSubclass(hwnd, &hookWndProc, 1, 0)) 
 	{
-		if (!SetWindowSubclass(hwnd, &hookWndProc, 1, 0)) 
-		{
-			return FALSE;
-		}
+		return FALSE;
 	}
 
 	hookedWindows[hwnd] = GetCurrentThreadId();
@@ -77,29 +76,16 @@ bool AddHook(HWND hwnd)
 	return TRUE;
 }
 	
-bool RemoveHook(HWND hwnd)
+void RemoveHook(HWND hwnd)
 {
-	if (hwnd == NULL)
-		return false;
+	std::lock_guard<std::mutex> guard(hookedWindowMutex);
 
-	std::lock_guard<std::mutex> guard(mutex);
-
-	// Make sure the window is actually subclassed
-	if (GetWindowSubclass(hwnd, &hookWndProc, 1, 0))
-	{
-		if (!RemoveWindowSubclass(hwnd, &hookWndProc, 1)) {
-			hookedWindows.erase(hwnd);
-			return FALSE;
-		}
-
-		hookedWindows.erase(hwnd);
-
-		return TRUE;
+	// It's fine if this is called on an unsubclassed window
+	if (!RemoveWindowSubclass(hwnd, &hookWndProc, 1)) {
+		// TODO: Figure out if there's anything we can do here...
 	}
-	else
-	{
-		return false;
-	}
+
+	hookedWindows.erase(hwnd);
 }
 
 void CleanupHookedWindows()
@@ -116,6 +102,8 @@ void CleanupHookedWindows()
 			hookedWindows.erase(it->first);
         }
 
+		// We have to do this because both of the above paths
+		// delete items from the hookedWindows map
 		it = hookedWindows.begin();
 	}
 }
