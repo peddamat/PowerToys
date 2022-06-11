@@ -287,7 +287,7 @@ BOOL GetStampedZoneProperties(HWND window, POINT &zoneSize, POINT &zoneOrigin) n
 	zoneOrigin.y = static_cast<int>(zoArray[1]);
 
 	// {width, height}
-	//DPIAware::Convert(MonitorFromWindow(window, MONITOR_DEFAULTTONULL), windowWidth, windowHeight);
+	//DPIAware::Convert(MonitorFromWindow(window, MONITOR_DEFAULTTONULL), zoneOrigin.x, zoneOrigin.y);
 
 	return true;
 }
