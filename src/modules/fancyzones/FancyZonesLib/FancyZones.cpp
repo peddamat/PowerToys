@@ -218,6 +218,9 @@ private:
     // Used to add FancyZonesHook to new and existing windows
     wil::unique_hmodule m_hookDll{ LoadLibrary(NonLocalizable::FZHookDllPath) };
     bool HookWindows(std::vector<HWND> windows) noexcept;
+
+	BOOL FancyZones::Is64BitWindows();
+    BOOL FancyZones::Is64Bit(DWORD pid);
 };
 
 std::function<void()> FancyZones::disableModuleCallback = {};
@@ -434,6 +437,41 @@ bool FancyZones::MoveToAppLastZone(HWND window, HMONITOR active, HMONITOR primar
     return false;
 }
 
+BOOL FancyZones::Is64BitWindows()
+{
+#if defined(_WIN64)
+    return TRUE; // 64-bit programs run only on Win64
+#elif defined(_WIN32)
+    // 32-bit programs run on both 32-bit and 64-bit Windows
+    // so must sniff
+    BOOL f64 = FALSE;
+    return IsWow64Process(GetCurrentProcess(), &f64) && f64;
+#else
+    return FALSE; // Win64 does not support Win16
+#endif
+}
+
+BOOL FancyZones::Is64Bit(DWORD pid)
+{
+    if (!Is64BitWindows())
+        return false;
+
+    BOOL wowProcess = false;
+    auto ph = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+    if (IsWow64Process(ph, &wowProcess))
+    {
+        // If it is a WOW process, then it's a 32-bit 
+        // process running on a 64-bit processor
+        if (!wowProcess)
+        {
+            return true;
+        }
+    }
+
+    CloseHandle(ph);
+    return false;
+}
+
 bool FancyZones::HookWindows(std::vector<HWND> windows) noexcept
 {
 	// Get the address of the hook function
@@ -445,17 +483,21 @@ bool FancyZones::HookWindows(std::vector<HWND> windows) noexcept
         DWORD procID;
         auto threadID = GetWindowThreadProcessId(window, &procID);
 
-        // Set the hook
-        auto hookHandle = SetWindowsHookEx(WH_GETMESSAGE, hookAddress, m_hookDll.get(), threadID);
+        // We can only hook 64-bit processes
+        if (Is64Bit(procID))
+		{
+            // Set the hook
+            auto hookHandle = SetWindowsHookEx(WH_GETMESSAGE, hookAddress, m_hookDll.get(), threadID);
 
-        if (hookHandle != NULL)
-        {
-            Logger::info("Adding hook to window: {}\n", (void*)window);
+            if (hookHandle != NULL)
+            {
+                Logger::info("Adding hook to window: {}\n", (void*)window);
 
-            // Tell the window to hook its window procedure
-            PostMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0);
+                // Tell the window to hook its window procedure
+                PostMessage(window, WM_PRIV_HOOK_WINDOW, (WPARAM)window, 0);
 
-            m_hooks[window] = hookHandle;
+                m_hooks[window] = hookHandle;
+            }
         }
     }
 
